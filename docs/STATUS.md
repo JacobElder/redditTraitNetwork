@@ -5,6 +5,25 @@ checklist this mirrors.
 
 ## Session log
 
+### 2026-09-01 (cont. 3) — first real LLM run (free tier, small)
+- Gemini key in `secrets/gemini_key` (file fallback), verified working.
+- **Free-tier reality**: `gemini-2.5-flash` free = ~5 rpm + ~250/day → weeks for
+  a full run. `gemini-3.5-flash-lite` free = ~100 rpm in bursts → usable. User
+  chose the small-run-then-scale path.
+- `config/milestone1_2_free.yaml`: gemini-3.5-flash-lite, replicates 1, generic
+  prior deferred. Running `build_networks --limit 8` now.
+- Fixes from the first (aborted) run against real Gemini:
+  - **per-chunk evidence brief** (`build_brief strategy='per_chunk'`): one
+    110k-token prompt gave flash-lite ~16 quotes total; per-chunk gives ~250+.
+  - **per-call JSON mode**: the E1 ablation *rewrite* (free text) was being
+    forced into `{"brief": ...}` JSON. Fixed in gemini + openai_compatible.
+  - rating prompt lists all 40 keys + requires each (was getting 14-key partials).
+  - max_tokens 2048 → 3072.
+- Scale-up: raise `--limit`, then flip `e2.fit_generic_prior` on, re-run
+  `milestone1_2`. Consider enabling billing later for the full 48 + confirmatory.
+
+
+
 ### 2026-09-01 (cont. 2) — Milestone 1.2 wiring + free-model backends + real ingest running
 - **Salt generated** → `secrets/salt` (gitignored). Real study salt, keep it safe.
 - **Ingest running** (`scripts/ingest_accounts`, background): 60 candidates seeded
