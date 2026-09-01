@@ -30,6 +30,100 @@ def _splice(doc: str, name: str, body: str) -> str:
     return doc.rstrip() + "\n\n" + block + "\n"
 
 
+def write_variance_partition(
+    vc,
+    d_bar_centrality: pd.DataFrame,
+    convergence: dict[str, float],
+    report_dir: str | Path,
+) -> Path:
+    """Milestone 1.2 section: nomothetic / idiographic variance partition.
+
+    ``vc`` is a ``VarianceComponents``; ``d_bar_centrality`` a tidy centrality
+    DataFrame for D-bar; ``convergence`` maps a label -> correlation
+    (e.g. {"D_bar vs D_generic": .62, "D_bar vs pooled E3": .48}).
+    """
+    report_dir = Path(report_dir)
+    report_dir.mkdir(parents=True, exist_ok=True)
+    report_path = report_dir / "milestone1.md"
+    ts = dt.datetime.now(dt.UTC).strftime("%Y-%m-%d %H:%M UTC")
+
+    total = (
+        vc.sigma2_account + vc.sigma2_pair + vc.sigma2_account_pair
+    ) or 1.0
+    pct = lambda x: f"{100 * x / total:.0f}%"
+    ci = vc.ci
+
+    top = d_bar_centrality[d_bar_centrality["measure"] == "sla"].nlargest(8, "value")
+    lines = [
+        "## 1.2 Nomothetic / idiographic variance partition",
+        "",
+        f"_Generated {ts}. {vc.n_accounts} accounts × {vc.n_pairs} directed trait "
+        f"pairs × {vc.replicates} replicates. Method-of-moments decomposition._",
+        "",
+        "### Where the edge-weight variance lives",
+        "",
+        "| component | variance | share | 95% CI |",
+        "|---|--:|--:|---|",
+        f"| **σ²_pair — nomothetic** (shared structure) | {vc.sigma2_pair:.3f} | "
+        f"{pct(vc.sigma2_pair)} | {ci.get('sigma2_pair', '—')} |",
+        f"| σ²_account (additive person shift) | {vc.sigma2_account:.3f} | "
+        f"{pct(vc.sigma2_account)} | — |",
+        f"| **σ²_account:pair — idiographic pattern** | {vc.sigma2_account_pair:.3f} | "
+        f"{pct(vc.sigma2_account_pair)} | {ci.get('sigma2_account_pair', '—')} |",
+        f"| σ²_replicate (elicitation noise, excluded above) | {vc.sigma2_rep:.3f} | — | — |",
+        "",
+        f"**ICC_idiographic = {vc.icc_idiographic:.3f}**  (CI {ci.get('icc_idiographic', '—')}) "
+        f"— share of non-noise edge variance that is person-specific "
+        f"(additive + pattern).",
+        f"ICC_account-only = {vc.icc_account_only:.3f} (CI {ci.get('icc_account_only', '—')}).",
+        "",
+        "### D̄ — the nomothetic network",
+        "",
+        "Top traits by SLA centrality on the pooled fixed-effect network:",
+        "",
+        top.to_markdown(index=False),
+        "",
+        "Convergence of the three nomothetic estimates:",
+        "",
+        "\n".join(f"- {k}: r = {v:+.3f}" for k, v in convergence.items()),
+        "",
+        "### Branch selection (docs/PLAN.md §7.2, §8)",
+        "",
+        _branch_note(vc),
+        "",
+    ]
+    body = "\n".join(lines)
+    doc = _splice(_load(report_path), "variance_partition", body)
+    if not doc.startswith("#"):
+        doc = _HEADER + "\n" + doc
+    report_path.write_text(doc)
+    return report_path
+
+
+def _branch_note(vc) -> str:
+    if vc.icc_idiographic < 0.10:
+        return (
+            f"`ICC_idiographic = {vc.icc_idiographic:.3f}` is low — the network is "
+            "mostly **nomothetic**. Milestone 2 runs H1–H3 on `D̄` centrality, "
+            "with each person's self-description weighting of `Bᵢ` as the "
+            "individual-difference term. Not a failure — this matches the "
+            "Sloman/Love/Ahn and Elder framing."
+        )
+    if vc.sigma2_account_pair > vc.sigma2_account:
+        return (
+            f"`ICC_idiographic = {vc.icc_idiographic:.3f}`, and the idiographic "
+            "variance is mostly *pattern* (σ²_account:pair > σ²_account) rather "
+            "than an additive shift — people have **distinctive dependency "
+            "structures**. Milestone 2 runs H1–H3 on per-account `Dᵢ` centrality."
+        )
+    return (
+        f"`ICC_idiographic = {vc.icc_idiographic:.3f}`, but it is mostly an "
+        "additive person effect (σ²_account ≳ σ²_account:pair) — people differ in "
+        "overall dependency magnitude, not in which edges they weight. Treat the "
+        "structure as nomothetic; report the additive effect as a nuisance."
+    )
+
+
 def _fig_recovery(df: pd.DataFrame, out: Path) -> Path | None:
     try:
         import matplotlib

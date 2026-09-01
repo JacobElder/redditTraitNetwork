@@ -74,7 +74,10 @@ def ingest_username(
         items = pd.read_parquet(items_path)
     else:
         client = client or ArcticShiftClient()
-        items = client.fetch_history(username)
+        max_items = ing.get("max_items")
+        items = client.fetch_history(
+            username, max_items=int(max_items) if max_items else None
+        )
         if gap_fill and praw_client is not None and not items.empty:
             recent = praw_client.fetch_recent(username)
             items = (

@@ -49,8 +49,10 @@ def _collect_usernames(args) -> list[str]:
         until = _parse_date(args.until) if args.until else int(dt.datetime.now(dt.UTC).timestamp())
         subs = [s.strip() for s in args.from_subreddit.split(",") if s.strip()]
         per_sub = max(1, -(-args.sample // len(subs)))  # spread the quota across subs
-        for sub in subs:
-            pool = client.active_authors(sub, after=since, before=until, cap=per_sub * 8)
+        for si, sub in enumerate(subs):
+            pool = client.active_authors(
+                sub, after=since, before=until, cap=per_sub * 6, seed=si
+            )
             users += pool[:per_sub]
             print(f"  seed r/{sub}: {min(len(pool), per_sub)} candidates")
     # dedupe, preserve order
@@ -82,7 +84,8 @@ def main() -> None:
         sys.exit("no usernames — pass --users, --users-file, or --from-subreddit")
 
     client = ArcticShiftClient(
-        base_url=cfg.get("ingest.arctic_shift_base", "https://arctic-shift.photon-reddit.com/api")
+        base_url=cfg.get("ingest.arctic_shift_base", "https://arctic-shift.photon-reddit.com/api"),
+        pause_s=float(cfg.get("ingest.request_pause_s", 0.35)),
     )
     praw_client = PrawClient(**cfg.get("ingest.praw", {})) if args.gap_fill else None
 

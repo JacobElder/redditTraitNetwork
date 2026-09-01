@@ -103,23 +103,35 @@ class ArcticShiftClient:
             return data or []
         raise RuntimeError(f"Arctic Shift: giving up on {url} after {self.max_retries} tries")
 
-    def _paginate(self, path: str, base_params: dict[str, Any]) -> Iterator[dict[str, Any]]:
-        after = int(base_params.pop("after", 0) or 0)
+    def _paginate(
+        self, path: str, base_params: dict[str, Any], *, newest_first: bool = False
+    ) -> Iterator[dict[str, Any]]:
+        """Walk a search endpoint by time. Ascending from ``after`` by default;
+        ``newest_first`` walks descending from ``before`` (or now), so a caller
+        that stops early keeps the most recent items.
+        """
         seen: set[str] = set()
         skips = 0
+        if newest_first:
+            cursor = int(base_params.pop("before", 0) or int(time.time()) + 1)
+        else:
+            cursor = int(base_params.pop("after", 0) or 0)
         while True:
-            params = {**base_params, "sort": "asc", "limit": self.page_limit}
-            if after > 0:
-                params["after"] = after
+            params = {**base_params, "sort": "desc" if newest_first else "asc",
+                      "limit": self.page_limit}
+            if newest_first:
+                params["before"] = cursor
+            elif cursor > 0:
+                params["after"] = cursor
             try:
                 page = self._get(path, params)
             except self.BadPage:
-                # dense window / server hiccup — jump forward a day and retry,
-                # up to a bound, so one bad slice doesn't lose the whole account
                 skips += 1
-                if skips > 400 or after == 0:
+                if skips > 400:
                     return
-                after += 86400
+                cursor += -86400 if newest_first else 86400
+                if cursor <= 0:
+                    return
                 if self.pause_s:
                     time.sleep(self.pause_s)
                 continue
@@ -127,12 +139,15 @@ class ArcticShiftClient:
             for d in fresh:
                 seen.add(d["id"])
                 yield d
-            if not page:
+            if not page or len(page) < self.page_limit:
                 return
-            last = max(int(d["created_utc"]) for d in page if d.get("created_utc"))
-            if len(page) < self.page_limit or last <= after:
+            utcs = [int(d["created_utc"]) for d in page if d.get("created_utc")]
+            if not utcs:
                 return
-            after = last + 1
+            nxt = (min(utcs) - 1) if newest_first else (max(utcs) + 1)
+            if nxt == cursor:
+                return
+            cursor = nxt
             if self.pause_s:
                 time.sleep(self.pause_s)
 
@@ -188,9 +203,15 @@ class ArcticShiftClient:
         include_posts: bool = True,
         max_items: int | None = None,
     ) -> pd.DataFrame:
+        # when capping, walk newest-first so the cap keeps recent behaviour
+        newest_first = max_items is not None
+
         def _take(path: str) -> Iterator[dict[str, Any]]:
+            params = {"author": username}
+            if after:
+                params["after"] = after
             for n, d in enumerate(
-                self._paginate(path, {"author": username, "after": after}), start=1
+                self._paginate(path, params, newest_first=newest_first), start=1
             ):
                 yield d
                 if max_items is not None and n >= max_items:
@@ -205,21 +226,38 @@ class ArcticShiftClient:
         return df
 
     def active_authors(
-        self, subreddit: str, *, after: int, before: int, cap: int = 5000
+        self, subreddit: str, *, after: int, before: int, cap: int = 200, seed: int = 0
     ) -> list[str]:
-        """Collect distinct comment authors in a subreddit/time window — a cheap
-        way to seed a candidate pool for the sample frame.
+        """Seed a candidate pool: sample comment authors at random timestamps
+        across the window and return them in encounter order.
+
+        Not count-sorted — sorting by comment volume systematically picks power
+        users, whose full histories are huge and whose trait networks are the
+        least representative. Random time points give a more typical activity
+        distribution and keep the seeding query cheap (one page per probe).
         """
-        authors: dict[str, int] = {}
-        for d in self._paginate(
-            "comments/search", {"subreddit": subreddit, "after": after, "before": before}
-        ):
-            a = d.get("author", "")
-            if a and a not in ("[deleted]", "AutoModerator"):
-                authors[a] = authors.get(a, 0) + 1
-            if len(authors) >= cap:
+        import random
+
+        rng = random.Random(seed)
+        seen: set[str] = set()
+        out: list[str] = []
+        probes = max(4, cap // 8)
+        for _ in range(probes):
+            t = rng.randint(int(after), max(int(after) + 1, int(before)))
+            page = self._get(
+                "comments/search",
+                {"subreddit": subreddit, "after": t, "sort": "asc", "limit": 100},
+            )
+            for d in page:
+                a = d.get("author", "")
+                if a and a not in ("[deleted]", "AutoModerator") and a not in seen:
+                    seen.add(a)
+                    out.append(a)
+            if len(out) >= cap:
                 break
-        return sorted(authors, key=authors.get, reverse=True)
+            if self.pause_s:
+                time.sleep(self.pause_s)
+        return out[:cap]
 
 
 class ArcticShiftDumpClient:

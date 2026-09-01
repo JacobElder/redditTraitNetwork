@@ -21,6 +21,9 @@ model:
   name: claude-sonnet-5
 
 ingest:
+  request_pause_s: 0.35          # Arctic Shift page delay
+  max_items: 6000                # cap fetch per endpoint (newest-first); a guard
+                                 # against 50k-comment power users, not a target
   chunk:
     # coarser chunks for real, prolific accounts: fewer LLM calls in E3, denser
     # text per chunk. Still well above E3's 20-chunk floor.
