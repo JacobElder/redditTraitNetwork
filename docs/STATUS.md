@@ -5,6 +5,50 @@ checklist this mirrors.
 
 ## Session log
 
+### 2026-09-01 (cont. 2) — Milestone 1.2 wiring + free-model backends + real ingest running
+- **Salt generated** → `secrets/salt` (gitignored). Real study salt, keep it safe.
+- **Ingest running** (`scripts/ingest_accounts`, background): 60 candidates seeded
+  from r/changemyview, AmItheAsshole, CasualConversation, AskReddit, self
+  (commenters 2023-06 … 2025-06), full histories via Arctic Shift, capped at
+  6000 items newest-first. ~65% pass the ≥300c / ≥2y / ≥5-sub filter → expect
+  ~35-40 eligible in `data/accounts/index.parquet`.
+- **Free/local rater backends added** so the estimation step needn't cost money:
+  `rater/gemini_backend.py` (AI Studio free tier), `rater/openai_compatible.py`
+  (Ollama local / Groq / OpenRouter free / vLLM). Wired in `build_rater`
+  (`backend: gemini | openai_compatible | ollama | openai`). `config/rater_free.yaml`
+  is a template. Cache key now includes the model id.
+- **`scripts/build_networks.py`** — batch E1/E2/E3 over the eligible index,
+  resumable, builds `d_generic` once.
+- **Milestone 1.2 analysis built**: `estimate/nomothetic.py` (D̄ + Bᵢ),
+  `validate/variance.py` (MoM variance partition → σ²_pair / σ²_account /
+  σ²_account:pair / σ²_rep, ICC_idiographic + bootstrap CI),
+  `validate/report.write_variance_partition`, `scripts/milestone1_2.py`.
+  `tests/test_variance.py` recovers known components.
+- **Chunking**: `sampled_window` mode — exactly `target_chunks` period-snapshot
+  chunks for prolific accounts (was splitting into 200+); ~5× fewer E3 calls.
+  NOTE: the running ingest used the pre-fix chunker; re-run `ingest_accounts`
+  (no `--overwrite`) after it finishes to re-chunk from cached items.
+- 21 tests pass, ruff clean. Branch `feat/milestone1-pipeline` pushed (7 commits).
+
+**BLOCKED ON: a model key for the estimation step.** No API keys or Ollama in
+this environment. Drop in `GEMINI_API_KEY` (free, aistudio.google.com/apikey) or
+`ANTHROPIC_API_KEY`, then:
+```
+# re-chunk with the new chunker (fast, no refetch)
+RTN_HASH_SALT=$(cat secrets/salt) python -m scripts.ingest_accounts \
+    --config config/default.yaml --override config/milestone1_2.yaml \
+    --from-subreddit changemyview,AmItheAsshole,CasualConversation,AskReddit,self \
+    --since 2023-06-01 --until 2025-06-01 --sample 60
+# build networks (free with Gemini)
+python -m scripts.build_networks --config config/default.yaml \
+    --override config/milestone1_2.yaml --override config/rater_free.yaml
+# variance partition -> reports/milestone1.md §1.2
+python -m scripts.milestone1_2 --config config/default.yaml \
+    --override config/milestone1_2.yaml
+```
+
+
+
 ### 2026-09-01 (cont.) — real-data ingest + nomothetic framing
 - **Nomothetic path added to the plan (docs/PLAN.md §2b).** Per the user: the
   Sloman/Love/Ahn and Elder conceptualization is substantially *nomothetic* — a
