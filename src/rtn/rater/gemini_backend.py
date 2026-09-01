@@ -1,12 +1,13 @@
 """Google Gemini backend via the AI Studio REST API.
 
-The AI Studio free tier (key from https://aistudio.google.com/apikey) allows
-enough throughput to run Milestone 1.2 over a couple of days:
-``gemini-2.0-flash`` / ``gemini-flash-latest`` free tier is rate-limited per
-minute and per day rather than billed. Paid Flash is also cheap if you want it
-to finish in one sitting.
+The AI Studio free tier (key from https://aistudio.google.com/apikey) is rate-
+limited per minute and per day rather than billed, which is enough to run
+Milestone 1.2 over a day or two. Check the exact model name available to your
+key with ``GET /v1beta/models?key=...``; ``gemini-2.0-flash`` and
+``gemini-2.5-flash`` are the usual free-tier options. Paid Flash is cheap if you
+want it to finish in one sitting.
 
-Config: ``model.backend: gemini``, ``model.name: gemini-flash-latest``,
+Config: ``model.backend: gemini``, ``model.name: gemini-2.0-flash``,
 key from ``GEMINI_API_KEY`` (or ``model.api_key``). Raw ``requests``, no SDK.
 """
 
@@ -32,7 +33,7 @@ class GeminiRater(Rater):
     def __init__(
         self,
         *,
-        model: str = "gemini-flash-latest",
+        model: str = "gemini-2.0-flash",
         api_key_env: str = "GEMINI_API_KEY",
         api_key: str | None = None,
         temperature: float = 0.0,

@@ -17,7 +17,7 @@
 # out so a long run doesn't trip the per-minute limit.
 model:
   backend: gemini
-  name: gemini-flash-latest
+  name: gemini-2.0-flash
   request_pause_s: 4.0        # ~15 requests/min; raise if you hit 429s
 
 # --- Local model via Ollama (truly free, needs a capable machine) --------
@@ -34,4 +34,14 @@ model:
 #   base_url: https://api.groq.com/openai/v1
 #   api_key_env: GROQ_API_KEY
 #   name: llama-3.3-70b-versatile
+#   request_pause_s: 2.0
+
+# --- OpenRouter free models (one key, no cost, daily cap) --------------
+# Free key: https://openrouter.ai/keys   (export OPENROUTER_API_KEY=...)
+# Check current :free model ids at https://openrouter.ai/models?max_price=0
+# model:
+#   backend: openai_compatible
+#   base_url: https://openrouter.ai/api/v1
+#   api_key_env: OPENROUTER_API_KEY
+#   name: z-ai/glm-5.2:free
 #   request_pause_s: 2.0

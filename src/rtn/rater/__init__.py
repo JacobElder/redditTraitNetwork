@@ -47,7 +47,7 @@ def build_rater(config, *, vocab: TraitVocab, oracle: Oracle | None = None) -> R
         from .gemini_backend import GeminiRater
 
         return GeminiRater(
-            model=m.get("name", "gemini-flash-latest"),
+            model=m.get("name", "gemini-2.0-flash"),
             api_key_env=m.get("api_key_env", "GEMINI_API_KEY"),
             api_key=m.get("api_key"),
             temperature=m.get("temperature", 0.0),
