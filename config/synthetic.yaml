@@ -1,0 +1,24 @@
+# Override for Milestone 1.1 synthetic recovery: mock rater, no cache, small
+# grid for a fast first pass. Scale up n_ground_truth_dags / replicates_per_cell
+# once the harness looks right.
+#
+#   python -m scripts.run_synthetic_recovery \
+#       --config config/default.yaml --override config/synthetic.yaml
+
+model:
+  backend: mock
+  seed: 20260831
+
+cache:
+  enabled: false
+
+estimate:
+  replicates: 3
+
+validate:
+  synthetic:
+    n_ground_truth_dags: 5
+    evidence_volume: [thin, medium, thick]
+    noise_levels: [0.0, 0.25]
+    replicates_per_cell: 3
+    seed: 20260831

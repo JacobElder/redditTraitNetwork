@@ -1,0 +1,235 @@
+# Fixed trait vocabulary for v1 — shared nodes across all accounts.
+#
+# 40 traits, valence-balanced (20 positive-valence, 20 negative-valence),
+# arranged as 20 antonym pairs so that every Big Five domain has coverage on
+# both poles. This is NOT idiographic node discovery: the node set is fixed so
+# centrality vectors are comparable across accounts, and so that "trait absent
+# from the person" is not confounded with "trait never mentioned in the corpus".
+#
+# `likableness` is the Anderson (1968) social-desirability rating on the 0–6
+# scale (higher = more likable), used only for valence balancing and as a
+# covariate. Values marked `approx: true` are reconstructed from the published
+# norms and MUST be checked against Anderson (1968) Table 1 before any result
+# that leans on the exact number. See traits/README.md for provenance.
+#
+# `big_five` is the primary IPIP domain for the PANDORA node-level convergent
+# validity check (Milestone 2). `+` = the trait loads positively on that domain,
+# `-` = negatively. Domains: O, C, E, A, N.
+
+version: v1
+scale:
+  # Anchors used in every rating prompt. 0 = trait does not describe the person
+  # at all; 100 = trait describes the person as strongly as it could.
+  min: 0
+  max: 100
+
+traits:
+  # ---- Agreeableness / warmth ---------------------------------------------
+  - name: honest
+    valence: pos
+    big_five: {domain: A, sign: "+"}
+    likableness: {value: 5.55, approx: false}
+    antonym: dishonest
+  - name: dishonest
+    valence: neg
+    big_five: {domain: A, sign: "-"}
+    likableness: {value: 0.41, approx: false}
+    antonym: honest
+  - name: kind
+    valence: pos
+    big_five: {domain: A, sign: "+"}
+    likableness: {value: 5.60, approx: true}
+    antonym: cruel
+  - name: cruel
+    valence: neg
+    big_five: {domain: A, sign: "-"}
+    likableness: {value: 0.40, approx: true}
+    antonym: kind
+  - name: considerate
+    valence: pos
+    big_five: {domain: A, sign: "+"}
+    likableness: {value: 5.42, approx: true}
+    antonym: inconsiderate
+  - name: inconsiderate
+    valence: neg
+    big_five: {domain: A, sign: "-"}
+    likableness: {value: 0.86, approx: true}
+    antonym: considerate
+  - name: generous
+    valence: pos
+    big_five: {domain: A, sign: "+"}
+    likableness: {value: 5.15, approx: true}
+    antonym: selfish
+  - name: selfish
+    valence: neg
+    big_five: {domain: A, sign: "-"}
+    likableness: {value: 0.90, approx: true}
+    antonym: generous
+  - name: warm
+    valence: pos
+    big_five: {domain: A, sign: "+"}
+    likableness: {value: 5.00, approx: true}
+    antonym: cold
+  - name: cold
+    valence: neg
+    big_five: {domain: A, sign: "-"}
+    likableness: {value: 1.35, approx: true}
+    antonym: warm
+  - name: forgiving
+    valence: pos
+    big_five: {domain: A, sign: "+"}
+    likableness: {value: 4.75, approx: true}
+    antonym: resentful
+  - name: resentful
+    valence: neg
+    big_five: {domain: A, sign: "-"}
+    likableness: {value: 1.20, approx: true}
+    antonym: forgiving
+
+  # ---- Conscientiousness -------------------------------------------------
+  - name: dependable
+    valence: pos
+    big_five: {domain: C, sign: "+"}
+    likableness: {value: 5.40, approx: true}
+    antonym: unreliable
+  - name: unreliable
+    valence: neg
+    big_five: {domain: C, sign: "-"}
+    likableness: {value: 0.90, approx: true}
+    antonym: dependable
+  - name: hardworking
+    valence: pos
+    big_five: {domain: C, sign: "+"}
+    likableness: {value: 5.00, approx: true}
+    antonym: lazy
+  - name: lazy
+    valence: neg
+    big_five: {domain: C, sign: "-"}
+    likableness: {value: 0.95, approx: true}
+    antonym: hardworking
+  - name: organized
+    valence: pos
+    big_five: {domain: C, sign: "+"}
+    likableness: {value: 4.20, approx: true}
+    antonym: disorganized
+  - name: disorganized
+    valence: neg
+    big_five: {domain: C, sign: "-"}
+    likableness: {value: 1.90, approx: true}
+    antonym: organized
+  - name: disciplined
+    valence: pos
+    big_five: {domain: C, sign: "+"}
+    likableness: {value: 4.35, approx: true}
+    antonym: impulsive
+  - name: impulsive
+    valence: neg
+    big_five: {domain: C, sign: "-"}
+    likableness: {value: 2.20, approx: true}
+    antonym: disciplined
+
+  # ---- Openness --------------------------------------------------------
+  - name: intelligent
+    valence: pos
+    big_five: {domain: O, sign: "+"}
+    likableness: {value: 5.25, approx: true}
+    antonym: unintelligent
+  - name: unintelligent
+    valence: neg
+    big_five: {domain: O, sign: "-"}
+    likableness: {value: 0.90, approx: true}
+    antonym: intelligent
+  - name: curious
+    valence: pos
+    big_five: {domain: O, sign: "+"}
+    likableness: {value: 4.40, approx: true}
+    antonym: incurious
+  - name: incurious
+    valence: neg
+    big_five: {domain: O, sign: "-"}
+    likableness: {value: 2.10, approx: true}
+    antonym: curious
+  - name: openminded
+    valence: pos
+    big_five: {domain: O, sign: "+"}
+    likableness: {value: 4.85, approx: true}
+    antonym: closedminded
+  - name: closedminded
+    valence: neg
+    big_five: {domain: O, sign: "-"}
+    likableness: {value: 1.15, approx: true}
+    antonym: openminded
+  - name: creative
+    valence: pos
+    big_five: {domain: O, sign: "+"}
+    likableness: {value: 4.60, approx: true}
+    antonym: unimaginative
+  - name: unimaginative
+    valence: neg
+    big_five: {domain: O, sign: "-"}
+    likableness: {value: 2.30, approx: true}
+    antonym: creative
+
+  # ---- Extraversion ---------------------------------------------------
+  - name: outgoing
+    valence: pos
+    big_five: {domain: E, sign: "+"}
+    likableness: {value: 4.30, approx: true}
+    antonym: withdrawn
+  - name: withdrawn
+    valence: neg
+    big_five: {domain: E, sign: "-"}
+    likableness: {value: 2.05, approx: true}
+    antonym: outgoing
+  - name: assertive
+    valence: pos
+    big_five: {domain: E, sign: "+"}
+    likableness: {value: 3.90, approx: true}
+    antonym: passive
+  - name: passive
+    valence: neg
+    big_five: {domain: E, sign: "-"}
+    likableness: {value: 2.15, approx: true}
+    antonym: assertive
+  - name: enthusiastic
+    valence: pos
+    big_five: {domain: E, sign: "+"}
+    likableness: {value: 4.60, approx: true}
+    antonym: apathetic
+  - name: apathetic
+    valence: neg
+    big_five: {domain: E, sign: "-"}
+    likableness: {value: 1.40, approx: true}
+    antonym: enthusiastic
+
+  # ---- Neuroticism (pos pole = emotional stability) -------------------
+  - name: calm
+    valence: pos
+    big_five: {domain: N, sign: "-"}
+    likableness: {value: 4.10, approx: true}
+    antonym: anxious
+  - name: anxious
+    valence: neg
+    big_five: {domain: N, sign: "+"}
+    likableness: {value: 1.85, approx: true}
+    antonym: calm
+  - name: secure
+    valence: pos
+    big_five: {domain: N, sign: "-"}
+    likableness: {value: 4.05, approx: true}
+    antonym: insecure
+  - name: insecure
+    valence: neg
+    big_five: {domain: N, sign: "+"}
+    likableness: {value: 1.60, approx: true}
+    antonym: secure
+  - name: eventempered
+    valence: pos
+    big_five: {domain: N, sign: "-"}
+    likableness: {value: 4.00, approx: true}
+    antonym: irritable
+  - name: irritable
+    valence: neg
+    big_five: {domain: N, sign: "+"}
+    likableness: {value: 1.50, approx: true}
+    antonym: eventempered

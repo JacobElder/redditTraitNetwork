@@ -1,0 +1,72 @@
+# Subreddits excluded at ingest. Inferring trait structure from disclosures in
+# support communities is the primary harm case, and it is also the population
+# where a trait-profiling output could do the most damage.
+#
+# Matching is case-insensitive on the subreddit name (no r/ prefix). Prefix
+# entries end with '*' and match any subreddit starting with that stem.
+#
+# This list is deliberately broad and will miss things. `max_excluded_fraction`
+# in the run config is the backstop: an account whose history is majority
+# excluded hard-fails ingest regardless of what this list catches.
+
+exact:
+  # mental health
+  - depression
+  - anxiety
+  - mentalhealth
+  - mentalillness
+  - bipolar
+  - BPD
+  - ptsd
+  - CPTSD
+  - schizophrenia
+  - OCD
+  - adhd
+  - autism
+  - aspergers
+  - SuicideWatch
+  - StopSelfHarm
+  - selfharm
+  - MMFB            # MakeMeFeelBetter
+  - offmychest
+  - TrueOffMyChest
+  - lonely
+  - ForeverAlone
+  # addiction / recovery
+  - stopdrinking
+  - leaves          # quitting cannabis
+  - stopsmoking
+  - quittingkratom
+  - OpiatesRecovery
+  - REDDITORSINRECOVERY
+  - addiction
+  - alcoholism
+  - benzorecovery
+  # abuse / trauma survivors
+  - abusiverelationships
+  - domesticviolence
+  - survivorsofabuse
+  - rapecounseling
+  - adultsurvivors
+  - raisedbynarcissists
+  - CPTSD_NSCommunity
+  - emotionalabuse
+  # eating disorders
+  - EatingDisorders
+  - AnorexiaNervosa
+  - bulimia
+  - EDAnonymous
+  - fuckeatingdisorders
+  # grief / other acute distress
+  - GriefSupport
+  - widowers
+  - miscarriage
+  - ttcafterloss
+  - cancer
+
+prefix:
+  - "eatingdisorder"
+  - "ptsd"
+  - "cptsd"
+  - "addiction"
+  - "recovery"

@@ -1,0 +1,32 @@
+# Data — never commit raw or cached Reddit content
+data/
+!data/.gitkeep
+
+# Username mapping — the only place raw usernames may live
+secrets/
+*.usermap.json
+
+# Model-call cache
+cache/
+*.sqlite
+*.sqlite-journal
+
+# Reports build artifacts (keep the .md, drop generated figures if large)
+reports/figures/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+build/
+dist/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
