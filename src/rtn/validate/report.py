@@ -72,6 +72,16 @@ def write_variance_partition(
         f"{pct(vc.sigma2_account_pair)} | {ci.get('sigma2_account_pair', '—')} |",
         f"| σ²_replicate (elicitation noise, excluded above) | {vc.sigma2_rep:.3f} | — | — |",
         "",
+        (
+            "> ⚠️ σ²_replicate ≈ 0 (run used 1 replicate, or a deterministic "
+            "model). Elicitation noise is **not** separated from the idiographic-"
+            "pattern term, so σ²_account:pair and ICC_idiographic below are "
+            "**upper bounds**. Milestone 1.4 (prompt paraphrases) gives the real "
+            "noise estimate; re-run 1.2 after."
+            if vc.sigma2_rep < 1e-6
+            else ""
+        ),
+        "",
         f"**ICC_idiographic = {vc.icc_idiographic:.3f}**  (CI {ci.get('icc_idiographic', '—')}) "
         f"— share of non-noise edge variance that is person-specific "
         f"(additive + pattern).",

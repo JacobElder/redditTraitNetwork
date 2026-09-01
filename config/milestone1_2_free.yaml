@@ -1,0 +1,26 @@
+# Milestone 1.2, small free-tier run. Layer on config/milestone1_2.yaml:
+#
+#   python -m scripts.build_networks --config config/default.yaml \
+#       --override config/milestone1_2.yaml --override config/milestone1_2_free.yaml \
+#       --limit 10
+#   python -m scripts.milestone1_2 --config config/default.yaml
+#
+# Scale-up plan: raise --limit as daily quota allows (build_networks skips
+# already-built accounts), then flip e2.fit_generic_prior on for the D̄ vs
+# generic-prior convergence check, then re-run milestone1_2.
+#
+# gemini-3.5-flash-lite: observed ~100 req/min on the free tier with no 429s in
+# short bursts (vs ~5/min for 2.5-flash). Still has a daily cap; the run pauses
+# and resumes. replicates: 1 — temp=0, effectively deterministic; sigma2_rep is
+# left unestimated and flagged in the report (Milestone 1.4 paraphrases give the
+# real elicitation-noise number).
+
+model:
+  backend: gemini
+  name: gemini-3.5-flash-lite
+  request_pause_s: 1.5
+
+estimate:
+  replicates: 1
+  e2:
+    fit_generic_prior: false   # defer to the scale-up pass
