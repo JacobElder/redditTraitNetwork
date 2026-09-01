@@ -11,8 +11,9 @@ cache/
 *.sqlite
 *.sqlite-journal
 
-# Reports build artifacts (keep the .md, drop generated figures if large)
+# Reports build artifacts (keep the .md, drop generated figures + run logs)
 reports/figures/
+reports/build_networks.log
 
 # Python
 __pycache__/

@@ -75,11 +75,14 @@ def main() -> None:
 
     out_dir = REPO_ROOT / "data" / "networks" / "_pooled"
     d_bar.save(out_dir / Network.artifact_name(f"{args.estimator}_pooled", ch8, pv))
-    pd.concat(
-        [n.to_long_df().assign(account_hash=a) for a, n in
-         ((a, Network(estimator="deviation", traits=vocab.names, d=b[a])) for a in b)],
-        ignore_index=True,
-    ).to_parquet(out_dir / f"deviations__{ch8}__{pv}.parquet", index=False)
+    dev_frames = []
+    for acct, mat in b.items():
+        f = Network(estimator="deviation", traits=vocab.names, d=mat).to_long_df()
+        f["account_hash"] = acct
+        dev_frames.append(f)
+    pd.concat(dev_frames, ignore_index=True).to_parquet(
+        out_dir / f"deviations__{ch8}__{pv}.parquet", index=False
+    )
     (out_dir / f"variance__{ch8}__{pv}.json").write_text(json.dumps(vc.as_row(), indent=2, default=str))
 
     report_path = write_variance_partition(vc, cent, convergence, cfg.get("report.dir", "reports"))
