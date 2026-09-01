@@ -11,14 +11,18 @@
 # re-elicited; switching back reuses the earlier answers. Keep prompt_version
 # and the trait vocab fixed within a study.
 
-# --- Google Gemini, AI Studio free tier -----------------------------------
-# Free key: https://aistudio.google.com/apikey  (export GEMINI_API_KEY=...)
-# Free tier is rate-limited per minute / per day; request_pause_s spaces calls
-# out so a long run doesn't trip the per-minute limit.
+# --- Google Gemini -------------------------------------------------------
+# Key: https://aistudio.google.com/apikey  (secrets/gemini_key or $GEMINI_API_KEY)
+#
+# FREE tier for gemini-2.5-flash on a fresh project is ~5 requests/minute AND a
+# daily cap (~250/day). A full Milestone 1.2 run is thousands of calls, so on the
+# free tier it takes weeks. To finish in an evening, enable billing on the key's
+# Google Cloud project (paid 2.5-flash ≈ $0.30/1M in, $2.50/1M out — the whole
+# 48-account run is roughly $15-25) and set request_pause_s: 0.
 model:
   backend: gemini
-  name: gemini-2.0-flash
-  request_pause_s: 4.0        # ~15 requests/min; raise if you hit 429s
+  name: gemini-2.5-flash
+  request_pause_s: 13.0       # free tier ~5 rpm. Set 0 once billing is enabled.
 
 # --- Local model via Ollama (truly free, needs a capable machine) --------
 # ollama pull llama3.1:70b   (or qwen2.5:32b / gemma2:27b for less VRAM)

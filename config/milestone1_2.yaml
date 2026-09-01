@@ -13,12 +13,13 @@
 #   The generic prior d_generic still runs once for the study; E1 and E3 carry
 #   the per-account signal. Turn per_account back on for the confirmatory sample
 #   if 1.2 shows E2 adds information.
-# - 3 replicates instead of 5 — temperature is 0, so replicate spread is only API
-#   non-determinism; 3 is enough to estimate weight_sd and ~40% cheaper.
-
-model:
-  backend: anthropic
-  name: claude-sonnet-5
+# - 2 replicates. Temperature is 0 and Gemini is effectively deterministic, so
+#   replicate spread barely captures elicitation noise — the real elicitation-
+#   noise estimate comes from Milestone 1.4 (prompt paraphrases), after which 1.2
+#   is re-run. Until then the §1.2 report flags sigma2_account:pair as an UPPER
+#   bound. 2 replicates is cheap insurance against non-determinism.
+#
+# Layer a rater override on top (config/rater_free.yaml) to pick the model.
 
 ingest:
   request_pause_s: 0.35          # Arctic Shift page delay
@@ -31,7 +32,7 @@ ingest:
     max_chars: 10000
 
 estimate:
-  replicates: 3
+  replicates: 2
   e2:
     enabled: true
     per_account: false
