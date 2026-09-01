@@ -30,22 +30,29 @@ checklist this mirrors.
   (no `--overwrite`) after it finishes to re-chunk from cached items.
 - 21 tests pass, ruff clean. Branch `feat/milestone1-pipeline` pushed (7 commits).
 
-**BLOCKED ON: a model key for the estimation step.** No API keys or Ollama in
-this environment. Drop in `GEMINI_API_KEY` (free, aistudio.google.com/apikey) or
-`ANTHROPIC_API_KEY`, then:
+**Ingest complete: 48/60 eligible** in `data/accounts/index.parquet`. Median
+5083 comments, 2237-day (6yr) span, 180 subreddits, 45 chunks/account (re-chunked
+with the sampled-window chunker). Full estimation chain verified end-to-end on
+these corpora with the mock backend.
+
+**BLOCKED ON: a model key for the estimation step.** No API keys / Ollama in
+this environment. Add a key, then two commands:
 ```
-# re-chunk with the new chunker (fast, no refetch)
-RTN_HASH_SALT=$(cat secrets/salt) python -m scripts.ingest_accounts \
-    --config config/default.yaml --override config/milestone1_2.yaml \
-    --from-subreddit changemyview,AmItheAsshole,CasualConversation,AskReddit,self \
-    --since 2023-06-01 --until 2025-06-01 --sample 60
-# build networks (free with Gemini)
+export GEMINI_API_KEY=...        # free: aistudio.google.com/apikey
+                                 # (or ANTHROPIC_API_KEY for a faster paid run)
+
 python -m scripts.build_networks --config config/default.yaml \
     --override config/milestone1_2.yaml --override config/rater_free.yaml
-# variance partition -> reports/milestone1.md §1.2
-python -m scripts.milestone1_2 --config config/default.yaml \
-    --override config/milestone1_2.yaml
+
+python -m scripts.milestone1_2 --config config/default.yaml   # auto-detects the build
 ```
+`milestone1_2` auto-detects the config hash from the artifacts on disk, so it
+does NOT need the same `--override` chain. `build_networks` is resumable (skips
+built accounts; the rater cache covers partial runs) — safe to Ctrl-C and rerun.
+
+Rough size of the run: ~19k model calls (E1 ~8k, E3 ~6.5k, generic prior 4.7k
+once). Gemini free tier: ~a day (rate limits). Paid Gemini Flash: ~$10-20, ~2h.
+Sonnet: ~$80-120.
 
 
 

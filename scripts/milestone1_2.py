@@ -37,20 +37,25 @@ def main() -> None:
     ap.add_argument("--config", default="config/default.yaml")
     ap.add_argument("--override", action="append", default=[])
     ap.add_argument("--estimator", default="e1", help="per-account estimator to pool")
+    ap.add_argument("--config-hash", default=None, help="disambiguate if multiple builds on disk")
     ap.add_argument("--boot", type=int, default=500)
     args = ap.parse_args()
 
     cfg = load_config(args.config, *args.override)
     vocab = load_traits(cfg.trait_vocab_path)
-    ch8, pv = cfg.hash8, cfg.prompt_version
+    pv = cfg.prompt_version
+    # auto-detect the config hash from the artifacts build_networks wrote, so
+    # milestone1_2 doesn't have to be passed the exact same --override chain
+    ch8 = args.config_hash
 
     nets = load_account_networks(args.estimator, ch8, pv)
     if len(nets) < 5:
         raise SystemExit(
-            f"only {len(nets)} account networks for {args.estimator}/{ch8}/{pv} — "
+            f"only {len(nets)} account networks for {args.estimator}/*/{pv} — "
             "run scripts.build_networks first"
         )
-    print(f"pooling {len(nets)} accounts ({args.estimator})")
+    ch8 = nets[next(iter(nets))].config_hash
+    print(f"pooling {len(nets)} accounts ({args.estimator}) · config {ch8}")
 
     d_bar, b = nomothetic_network(nets, vocab, estimator=f"{args.estimator}_pooled")
     long_df = stack_long(nets)

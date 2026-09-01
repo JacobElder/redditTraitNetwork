@@ -20,11 +20,42 @@ from ..network import Network
 from ..traits import TraitVocab
 
 
-def load_account_networks(
-    estimator: str, config_hash8: str, prompt_version: str, root: Path | None = None
-) -> dict[str, Network]:
-    """All per-account artifacts for one estimator/config/prompt combination."""
+def discover_config_hashes(
+    estimator: str, prompt_version: str, root: Path | None = None
+) -> list[str]:
+    """Config hashes that have per-account artifacts for this estimator on disk."""
     root = root or (REPO_ROOT / "data" / "networks")
+    hashes = set()
+    for path in root.glob(f"*/{estimator}__*__{prompt_version}.parquet"):
+        if path.parent.name.startswith("_"):
+            continue
+        hashes.add(path.name.split("__")[1])
+    return sorted(hashes)
+
+
+def load_account_networks(
+    estimator: str,
+    config_hash8: str | None,
+    prompt_version: str,
+    root: Path | None = None,
+) -> dict[str, Network]:
+    """Per-account artifacts for one estimator/config/prompt.
+
+    ``config_hash8=None`` auto-detects: if exactly one config hash has artifacts
+    on disk, use it; otherwise raise so the caller can disambiguate.
+    """
+    root = root or (REPO_ROOT / "data" / "networks")
+    if config_hash8 is None:
+        found = discover_config_hashes(estimator, prompt_version, root)
+        if len(found) == 1:
+            config_hash8 = found[0]
+        elif not found:
+            return {}
+        else:
+            raise ValueError(
+                f"multiple config hashes on disk for {estimator}: {found}. "
+                "Pass --config/--override matching the build, or clear old artifacts."
+            )
     name = Network.artifact_name(estimator, config_hash8, prompt_version)
     out: dict[str, Network] = {}
     for path in sorted(root.glob(f"*/{name}")):
