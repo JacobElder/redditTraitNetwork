@@ -124,7 +124,8 @@ def run_recovery(config) -> pd.DataFrame:
 
             brief = build_brief(
                 account, hist.chunk_texts, vocab, prompts, rater,
-                quotes_per_trait=quotes_per_trait, config_hash=config.hash8,
+                quotes_per_trait=quotes_per_trait, strategy="single",
+                config_hash=config.hash8,
             )
             e1 = estimate_e1(
                 brief, vocab, prompts, rater,

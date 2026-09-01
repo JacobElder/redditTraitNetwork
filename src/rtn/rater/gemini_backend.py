@@ -65,14 +65,16 @@ class GeminiRater(Rater):
 
     def _generate(self, prompt: str, call_parts: dict[str, Any]) -> tuple[str, dict[str, Any]]:
         url = f"{self._base}/{self._model}:generateContent"
+        gen_cfg = {
+            "temperature": self._temperature,
+            "maxOutputTokens": self._max_tokens,
+        }
+        if getattr(self, "_active_expect_json", True):
+            gen_cfg["responseMimeType"] = "application/json"
         payload = {
             "systemInstruction": {"parts": [{"text": _SYSTEM}]},
             "contents": [{"role": "user", "parts": [{"text": prompt}]}],
-            "generationConfig": {
-                "temperature": self._temperature,
-                "maxOutputTokens": self._max_tokens,
-                "responseMimeType": "application/json",
-            },
+            "generationConfig": gen_cfg,
         }
         for attempt in range(6):
             resp = self._requests.post(

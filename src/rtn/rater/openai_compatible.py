@@ -72,7 +72,7 @@ class OpenAICompatibleRater(Rater):
                 {"role": "user", "content": prompt},
             ],
         }
-        if self._force_json:
+        if self._force_json and getattr(self, "_active_expect_json", True):
             payload["response_format"] = {"type": "json_object"}
 
         for attempt in range(6):

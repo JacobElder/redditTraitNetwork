@@ -56,6 +56,7 @@ class Rater(ABC):
         self.cache_enabled = cache_enabled and cache is not None
         self.max_retries = max_retries
         self._active_parts: dict[str, Any] = {}
+        self._active_expect_json: bool = True
 
     # -- subclass hook ------------------------------------------------
     @abstractmethod
@@ -86,6 +87,7 @@ class Rater(ABC):
                 )
 
         self._active_parts = call_parts
+        self._active_expect_json = expect_json
         text, usage, data = self._generate_validated(prompt, expect_json)
 
         if self.cache_enabled:

@@ -10,7 +10,7 @@ trait_vocab: traits/traits.yaml   # hashed into the config hash
 model:
   backend: anthropic              # anthropic | mock
   name: claude-sonnet-5
-  max_tokens: 2048
+  max_tokens: 3072              # headroom for 40-key rating JSON + ablation rewrites
   temperature: 0.0                # ratings must be as deterministic as the API allows
   seed: 7
 
@@ -46,6 +46,7 @@ estimate:
     enabled: true
     ablation_strength: strong     # strong = remove supporting evidence AND add contradicting
     evidence_quotes_per_trait: 8
+    brief_strategy: per_chunk      # per_chunk (extract from each chunk, merge) | single
   e2:
     enabled: true
     per_account: true             # elicit all 1560 ordered pairs per account (the

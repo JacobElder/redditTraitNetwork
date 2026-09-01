@@ -11,23 +11,24 @@ from __future__ import annotations
 from .base import Prompts
 
 _EVIDENCE_BRIEF = """You are building an evidence brief about one Reddit account, \
-for a personality-measurement study. Below is a sample of that account's posts \
-and comments, split into chunks.
+for a personality-measurement study. Below is an excerpt of that account's own \
+posts and comments.
 
-For each trait in the list, extract up to {quotes_per_trait} SHORT VERBATIM \
-QUOTES (<= 240 characters each) from the corpus that bear on whether this person \
-has that trait — evidence for OR against it. Keep the chunk number with each \
-quote. If the corpus contains no relevant evidence for a trait, return an empty \
-list for it.
+Go through the excerpt carefully. For EACH trait in the list, pull every SHORT \
+VERBATIM QUOTE (<= 240 characters) in this excerpt that bears on whether this \
+person has that trait — evidence for OR against. Most traits will have no \
+evidence in a given excerpt; return an empty list for those. Do not paraphrase \
+or invent; quote the person's actual words.
 
 Traits:
 {trait_menu}
 
-Corpus:
+Excerpt:
 {corpus}
 
-Respond with ONLY a JSON object: {{"<trait>": [{{"quote": "...", "chunk": <int>, \
-"direction": "for" | "against"}}], ...}}. Every trait must be a key. No prose."""
+Respond with ONLY a JSON object with every trait as a key: \
+{{"<trait>": [{{"quote": "...", "direction": "for" | "against"}}], ...}}. \
+No prose, no code fences."""
 
 _E1_ELICIT = """The following is an evidence brief about one person, assembled \
 from their own writing. Read it and answer AS AN ASSESSOR rating this person.

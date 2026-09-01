@@ -75,6 +75,11 @@ class MockRater(Rater):
             )
             return json.dumps(payload), usage
 
+        if task == "evidence_chunk":
+            # per-chunk extraction: the synthetic oracle carries density at the
+            # brief level, so an empty per-chunk result is fine (uniform density).
+            return json.dumps({t: [] for t in self.vocab.names}), usage
+
         if task == "e1_ablate_rewrite":
             # The ablated brief text is not consumed by the oracle; a marker is
             # enough. Real backends return a genuinely rewritten brief here.

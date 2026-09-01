@@ -24,12 +24,14 @@ def _trait_menu(vocab: TraitVocab) -> str:
 
 def _json_instruction(vocab: TraitVocab) -> str:
     return (
-        "Respond with ONLY a JSON object mapping every trait name to an integer "
-        f"from {int(vocab.scale_min)} to {int(vocab.scale_max)}. "
-        f"{int(vocab.scale_min)} = the trait does not describe this person at "
-        f"all; {int(vocab.scale_max)} = it describes them as strongly as it "
-        "possibly could. Use null only if there is genuinely no relevant "
-        "evidence. No prose, no code fences."
+        f"Respond with ONLY a JSON object. It MUST contain all {vocab.k} trait "
+        "names below as keys — include every one, even the ones with weak "
+        f"evidence. Each value is an integer from {int(vocab.scale_min)} to "
+        f"{int(vocab.scale_max)}: {int(vocab.scale_min)} = does not describe this "
+        f"person at all, {int(vocab.scale_max)} = describes them as strongly as "
+        "possible. Use your best estimate rather than null unless there is truly "
+        "nothing to go on. No prose, no code fences.\n\nTrait keys:\n"
+        + ", ".join(vocab.names)
     )
 
 
@@ -44,17 +46,14 @@ class Prompts:
             f"[chunk {i}]\n{t}" for i, t in enumerate(chunk_texts)
         )
         return self.templates["evidence_brief"].format(
-            trait_menu=_trait_menu(vocab),
-            corpus=corpus,
-            quotes_per_trait="{quotes_per_trait}",
+            trait_menu=_trait_menu(vocab), corpus=corpus
         )
 
     def evidence_brief_rendered(
-        self, chunk_texts: list[str], vocab: TraitVocab, quotes_per_trait: int
+        self, chunk_texts: list[str], vocab: TraitVocab, quotes_per_trait: int = 0
     ) -> str:
-        return self.evidence_brief(chunk_texts, vocab).replace(
-            "{quotes_per_trait}", str(quotes_per_trait)
-        )
+        # quotes_per_trait is applied by the merge step, not the prompt
+        return self.evidence_brief(chunk_texts, vocab)
 
     # -- E1 -----------------------------------------------------------
     def e1_elicit(self, brief_text: str, vocab: TraitVocab) -> str:

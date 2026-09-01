@@ -51,6 +51,7 @@ def main() -> None:
     brief = build_brief(
         args.account, chunk_texts, vocab, prompts, rater,
         quotes_per_trait=int(cfg.get("estimate.e1.evidence_quotes_per_trait", 8)),
+        strategy=cfg.get("estimate.e1.brief_strategy", "per_chunk"),
         config_hash=ch8,
     )
     e1 = estimate_e1(

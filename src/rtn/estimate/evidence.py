@@ -90,23 +90,66 @@ def build_brief(
     rater: Rater,
     *,
     quotes_per_trait: int = 8,
+    strategy: str = "per_chunk",
     config_hash: str | None = None,
 ) -> EvidenceBrief:
-    prompt = prompts.evidence_brief_rendered(chunk_texts, vocab, quotes_per_trait)
-    parts = {
+    """``per_chunk`` (default): extract trait evidence from each chunk separately,
+    then merge and keep the top ``quotes_per_trait`` per trait. Robust to model
+    context limits and far more thorough than one giant prompt. ``single``: the
+    original one-shot extraction over the whole corpus.
+    """
+    base = {
         "account_hash": account_hash,
         "prompt_version": prompts.version,
-        "task": "evidence_brief",
-        "trait": None,
-        "replicate": 0,
         "config_hash": config_hash,
     }
-    resp = rater.complete(prompt, call_parts=parts, expect_json=True)
-    data = resp.data if isinstance(resp.data, dict) else {}
-    quotes = _parse_quotes(data, vocab)
+    if strategy == "single":
+        prompt = prompts.evidence_brief_rendered(chunk_texts, vocab, quotes_per_trait)
+        resp = rater.complete(
+            prompt,
+            call_parts={**base, "task": "evidence_brief", "trait": None, "replicate": 0},
+            expect_json=True,
+        )
+        data = resp.data if isinstance(resp.data, dict) else {}
+        quotes = _parse_quotes(data, vocab)
+    else:
+        merged: dict[str, list[Quote]] = {n: [] for n in vocab.names}
+        raw: dict[str, Any] = {}
+        for ci, text in enumerate(chunk_texts):
+            resp = rater.complete(
+                prompts.evidence_brief_rendered([text], vocab, quotes_per_trait),
+                call_parts={**base, "task": "evidence_chunk", "trait": f"c{ci:05d}", "replicate": 0},
+                expect_json=True,
+            )
+            d = resp.data if isinstance(resp.data, dict) else {}
+            for name, qs in _parse_quotes(d, vocab).items():
+                for q in qs:
+                    merged[name].append(Quote(text=q.text, chunk=ci, direction=q.direction))
+            raw[f"c{ci}"] = d
+        quotes = {
+            n: _dedupe_rank(merged[n], quotes_per_trait) for n in vocab.names
+        }
+        data = raw
+
     return EvidenceBrief(
         account_hash=account_hash,
         quotes=quotes,
         density=_density(quotes, vocab),
         raw=data,
     )
+
+
+def _dedupe_rank(quotes: list[Quote], keep: int) -> list[Quote]:
+    seen: set[str] = set()
+    out: list[Quote] = []
+    # prefer longer (more informative) quotes, spread across chunks
+    for q in sorted(quotes, key=lambda x: -len(x.text)):
+        norm = " ".join(q.text.lower().split())[:120]
+        if norm in seen:
+            continue
+        seen.add(norm)
+        out.append(q)
+        if len(out) >= keep * 2:
+            break
+    out.sort(key=lambda x: x.chunk)
+    return out[: keep] if keep else out
