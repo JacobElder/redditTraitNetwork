@@ -31,17 +31,25 @@ iteration, and PageRank all assume this. Diagonal is 0.
 
 ## 1. Non-negotiable framing
 
-1. **Measurement validation first, substance second.** The obvious failure mode:
-   the LLM imposes a generic folk theory of trait relations, so every account
-   gets ~the same network, lightly perturbed by that account's trait levels. If
-   so, the pipeline is an expensive constant and the project is dead. Milestone 1
-   is built to detect this *before* any substantive analysis exists.
-2. **Do not build Milestone 2 until the Milestone 1 gate passes.**
-3. **Do not tune the gate to pass.** If `ICC_account < .10`, report it plainly
-   and propose redesigns.
-4. **Inference, not prediction.** Report effect estimates with uncertainty
-   intervals, not accuracy/F1.
-5. **Ethics is enforced in code** (hashing, exclusion filter, aggregate-only
+1. **Measurement validation first, substance second.** The failure mode to rule
+   out: the pipeline is an expensive constant — it returns a number with no
+   information beyond a fixed prior. Milestone 1 tests this *before* any
+   substantive analysis exists.
+2. **Nomothetic and idiographic are both real targets — see §2b.** Sloman, Love
+   & Ahn (1998) and much of the Elder social-neuro work treat feature/trait
+   centrality as a largely **shared** conceptual structure: people carry roughly
+   the same map of how traits depend on each other, and differ in *which parts
+   they weight* given how they self-describe. The Elder, Cheung, Davis & Hughes
+   (*JPSP* 2023) paradigm then measures each participant's own weighted version.
+   So "every account gets ~the same network" is **not automatically a failure** —
+   it may be the correct nomothetic answer, and the question becomes how much
+   idiographic deviation rides on top of it. The old hard gate
+   (`ICC_account ≥ .10` or stop) is reframed accordingly in §7.2.
+3. **Do not build Milestone 2 until Milestone 1 has run and been reviewed.**
+4. **Do not tune any threshold to pass.** Report the variance partition plainly.
+5. **Inference, not prediction.** Effect estimates with uncertainty, not
+   accuracy/F1.
+6. **Ethics is enforced in code** (hashing, exclusion filter, aggregate-only
    output), not asserted in a README.
 
 ---
@@ -109,6 +117,58 @@ person who…", stop — that is a request for the model's generic prior.
   piece of validation evidence.**
 - Writeup must state: E3 estimates covariation, not conceptual dependency in
   Sloman's sense. Convergence is evidence; identity is not claimed.
+
+---
+
+## 2b. Nomothetic and idiographic networks — estimate both
+
+The dependency structure has two levels, and the project reports both. They come
+from the *same* per-account estimator outputs (E1/E2/E3), combined two ways.
+
+### The nomothetic network `D̄`
+
+The shared "how traits depend on each other, in general" map. Three converging
+estimates, in increasing order of grounding:
+
+- **N1 = E2 generic prior** (`estimate_generic`, already built). Direct pairwise
+  elicitation, no persona, no corpus. Pure folk theory. One matrix for the study.
+- **N2 = pooled fixed effect.** Stack every account's E1 (and separately E3)
+  long-format edge table and fit, per directed pair `p`,
+  `weight_p,account ~ N(μ_p, τ_p²)` with partial pooling across accounts
+  (a crossed model: `weight ~ 0 + pair + (0 + pair | account)`; the fixed-effect
+  vector is `D̄`, the per-account random deviations are the idiographic part).
+  `μ_p` shrinks thin/noisy accounts toward the grand structure.
+- **N3 = pooled E3.** Concatenate all accounts' chunk×trait matrices (account as
+  a grouping factor / with account-mean-centering) and estimate one graphical
+  VAR / EBICglasso — covariation structure pooled over people.
+
+`D̄` has its own centrality vector; this is directly comparable to the shared
+structure in Sloman/Love/Ahn and Elder et al. and is a result in its own right.
+
+### The idiographic deviation `Bᵢ`
+
+For account `i`: `Dᵢ = D̄ + Bᵢ`. `Bᵢ` is the account-level random-effect matrix
+from N2 (or `Dᵢ_E1 − D̄`). The substantive claim the user is after: **`Bᵢ` is
+structured by how the person self-describes** — an edge `i→j` deviates from the
+nomothetic weight more when the account has more self-relevant evidence bearing
+on `i` and `j` (evidence density from the brief), or more extreme standing on
+them. Model `|Bᵢ,p|` (or `Bᵢ,p` signed) on per-account, per-trait self-description
+covariates. Personalised PageRank (teleport = evidence density) is the
+centrality-level version of the same idea.
+
+### What the variance partition means
+
+The crossed random-effects fit in §7.2 gives
+`ICC_account = σ²_account / (σ²_account + σ²_pair + σ²_resid)` =
+**the share of dependency-edge variance that is idiographic** rather than shared.
+
+- Low `ICC_account` → the network is mostly nomothetic. The headline analyses run
+  on `D̄`'s centrality, with person-level self-description weighting as the
+  source of individual differences. Still a paper; still matches the theory.
+- High `ICC_account` → idiographic centrality (`Dᵢ`) is a meaningful per-person
+  DV, and H1–H3 (§8) run per account as originally framed.
+
+Either way the number is *estimated and reported*, not used as a pass/fail gate.
 
 ---
 
@@ -311,13 +371,12 @@ contracts (schemas above) stable.
 
 ---
 
-## 7. Milestone 1 — the gate. Build in this order.
+## 7. Milestone 1 — validation. Build in this order.
 
 Write everything to `reports/milestone1.md` with figures. Be blunt about
-failures. Nothing in Milestone 2 starts until the user has seen this report and
-the ICC gate passes.
+failures. Nothing in Milestone 2 starts until the user has seen this report.
 
-### 1.1 Synthetic recovery  ← **current focus**
+### 1.1 Synthetic recovery
 Ground-truth DAGs → synthetic histories crossing evidence volume
 (thin/medium/thick) × noise → full pipeline → report edge-weight recovery `r`
 and centrality rank recovery `ρ`. **Purpose: set `k` (E1 ablation count), chunk
@@ -326,12 +385,23 @@ the `mock` rater end-to-end for free; also run a small grid on the real
 `anthropic` rater to check the mock's realism.
 Output section: "Synthetic recovery".
 
-### 1.2 Variance decomposition
-~50 real accounts (needs 1.2 ingest working). Fit crossed random effects on
-`d[i][j]` with `account_hash` and `trait_pair` as grouping factors. Report
-`ICC_account` with CI. **GATE: `ICC_account ≥ .10`.** Below → stop, write the
-"why", propose redesigns (richer briefs, stronger ablation, per-account node
-weighting, different elicitation, …). Do not proceed.
+### 1.2 Nomothetic / idiographic variance partition
+~50 real accounts (needs ingest — now built, see `scripts/ingest_accounts.py`).
+Fit crossed random effects on `d[i][j]` with `account_hash` and `trait_pair` as
+grouping factors (§2b, N2). Report:
+- the **nomothetic network `D̄`** (fixed-effect edge vector) and its centrality,
+  next to N1 (E2 generic) and N3 (pooled E3) for convergence;
+- `ICC_account` with a bootstrap CI = the idiographic share of edge variance;
+- `corr(D̄, D_generic)` — how far the grounded pooled network sits from pure
+  folk theory.
+
+**Not a pass/fail gate.** `ICC_account` near 0 routes the substantive work to
+the nomothetic branch (H1–H3 on `D̄` centrality + person-level self-description
+weighting of `Bᵢ`); a large `ICC_account` routes it to the idiographic branch
+(H1–H3 per account). Write which branch the data selects and why. Only a
+*pathological* result — `D̄` itself uninformative (≈ `D_generic` **and** no
+structure beyond antonym pairs) **and** `ICC_account` ≈ 0 — means stop and
+redesign the estimator.
 
 ### 1.3 Split-half reliability
 Per corpus: random chunk split and temporal split. Correlate centrality vectors
@@ -352,6 +422,12 @@ distinctiveness on real corpora must exceed this null.
 Reddit is the right corpus because it is a **naturally occurring social-feedback
 environment** — the thing the lab paradigm studied under controlled conditions.
 Votes and replies are feedback; subsequent posting is updating.
+
+**Branch selected by 1.2.** If the variance partition is mostly nomothetic,
+`centrality` in H1–H3 below is centrality on `D̄` (same value for everyone) and
+the individual-difference term is the person's self-description weighting of `Bᵢ`
+(§2b). If it is meaningfully idiographic, `centrality` is per-account centrality
+on `Dᵢ`. The hypotheses are stated the same way either way.
 
 - **H1 — coherence / resistance to change.** Trait expression drifts less across
   time epochs for high-centrality traits. Model: `centrality → temporal
@@ -409,12 +485,20 @@ on the full sample. Hold out a confirmatory subsample.
 10. [~] **Run 1.1 (first pass done, `reports/milestone1.md` §1.1 written).**
     Remaining: analyst fills the "Read / decisions" TODOs, scale grid up
     (`config/default.yaml` values), run a tiny real-API grid to check mock realism.
-11. [ ] `ingest/clients.py` real impl (Arctic Shift DuckDB sample frame + fetch,
-    PRAW gap-fill) + `scripts/build_network.py` wired (script skeleton exists)
-12. [ ] `validate/variance.py` + run 1.2 → **ICC gate**
+11. [x] `ingest/clients.py` real impl — `ArcticShiftClient` (HTTP API, time-
+    paginated per-author fetch), `ArcticShiftDumpClient` (DuckDB/HF sample
+    frame), `PrawClient` (gap-fill). `ingest/pipeline.py` +
+    `scripts/ingest_accounts.py` (hash → fetch → exclusion → inclusion → chunk →
+    `data/accounts/index.parquet`). Tested on real accounts.
+12. [ ] `estimate/nomothetic.py` — N2 pooled fixed effect (`D̄`) + per-account
+    deviations `Bᵢ`; N3 pooled E3. `validate/variance.py` — crossed random
+    effects → `ICC_account`, `D̄` centrality, N1/N2/N3 convergence. Run 1.2 on
+    ~50 accounts. **Reports the nomothetic/idiographic partition; not a gate.**
 13. [ ] `validate/reliability.py`, `nulls.py`, prompt paraphrases → 1.3–1.5
-14. [ ] Full `reports/milestone1.md`, user review
-15. [ ] (gate passed) `preregistration.md`, then `analysis/`
+14. [ ] `scripts/build_network.py` batch-run over the account index (real rater)
+15. [ ] Full `reports/milestone1.md`, user review → choose nomothetic vs
+    idiographic branch
+16. [ ] `preregistration.md`, then `analysis/`
 
 ### Known gaps / debt (carry forward)
 - `estimate/e3_covariation.ebicglasso` over-sparsifies at p=40 (EBIC picks a

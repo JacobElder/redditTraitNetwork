@@ -26,10 +26,17 @@ what is happening the pipeline is an expensive constant.
 
 ## Hard rules (do not violate without the user saying so explicitly)
 
-- **Build Milestone 1 in order and stop at the gate.** Show the user
-  `reports/milestone1.md` before writing any `analysis/` (Milestone 2) code.
-- **Do not tune the gate to pass.** If `ICC_account < .10`, say so plainly and
-  propose redesigns — do not search for a framing where it passes.
+- **Build Milestone 1 in order.** Show the user `reports/milestone1.md` before
+  writing any `analysis/` (Milestone 2) code.
+- **Nomothetic AND idiographic (see `docs/PLAN.md` §2b).** The trait-dependency
+  structure is partly shared (nomothetic `D̄`) and partly person-specific
+  (idiographic `Bᵢ`, where `Dᵢ = D̄ + Bᵢ`). Both are estimated and reported.
+  "Every account gets ~the same network" is **not automatically a failure** — it
+  may be the correct nomothetic answer. Milestone 1.2 *estimates* the
+  idiographic share of variance (`ICC_account`); it is not a pass/fail gate.
+  Only a pathological result (`D̄` ≈ generic prior **and** `ICC_account` ≈ 0)
+  means stop and redesign.
+- **Do not tune any threshold to pass.** Report the variance partition plainly.
 - **Statistical-inference framing, not predictive framing.** Effect estimates
   with uncertainty. No "accuracy" scores.
 - **Ethics enforced in code, not prose:**
@@ -79,6 +86,10 @@ ruff format src tests                           # format
 # Milestone 1.1 — synthetic recovery (no Reddit access, mock rater by default)
 python -m scripts.run_synthetic_recovery --config config/default.yaml \
     --override config/synthetic.yaml
+
+# Ingest real accounts (Arctic Shift HTTP API, no credentials). RTN_HASH_SALT required.
+RTN_HASH_SALT=... python -m scripts.ingest_accounts --users alice,bob --config config/default.yaml
+RTN_HASH_SALT=... python -m scripts.ingest_accounts --from-subreddit AskHistorians --since 2023-01-01 --sample 60
 
 # Build one network from a cached account corpus
 python -m scripts.build_network --account <account_hash> --config config/default.yaml

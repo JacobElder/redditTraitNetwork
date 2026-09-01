@@ -58,10 +58,18 @@ def chunk_items(items: pd.DataFrame, cfg: dict, account_hash: str) -> list[Chunk
     max_chars = int(cfg.get("max_chars", 6000))
     min_chars = int(cfg.get("min_chars", 200))
     window_size = int(cfg.get("window_size", 15))
+    target_chunks = cfg.get("target_chunks")
 
     items = items.sort_values("created_utc").reset_index(drop=True)
     if items.empty:
         return []
+
+    # A prolific account can yield thousands of thread-chunks, which is unusable
+    # for per-chunk LLM rating and for graphical VAR. When target_chunks is set,
+    # coarsen to ~that many time-ordered windows (still capped by max_chars).
+    if target_chunks:
+        strategy = "window"
+        window_size = max(window_size, -(-len(items) // int(target_chunks)))
 
     t_lo, t_hi = int(items["created_utc"].min()), int(items["created_utc"].max())
     n_epochs = max(2, min(6, len(items) // 40))

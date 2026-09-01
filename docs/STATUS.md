@@ -5,6 +5,39 @@ checklist this mirrors.
 
 ## Session log
 
+### 2026-09-01 (cont.) — real-data ingest + nomothetic framing
+- **Nomothetic path added to the plan (docs/PLAN.md §2b).** Per the user: the
+  Sloman/Love/Ahn and Elder conceptualization is substantially *nomothetic* — a
+  shared trait-dependency map that individuals re-weight by how they
+  self-describe. `Dᵢ = D̄ + Bᵢ`. We now estimate and report BOTH: `D̄` (pooled
+  fixed effect / E2 generic / pooled E3) and `Bᵢ` (per-account deviation,
+  modelled on self-description covariates). Milestone 1.2's `ICC_account` is
+  reframed from a pass/fail gate to *the estimate of the idiographic variance
+  share*, which selects which branch (nomothetic vs idiographic) the Milestone 2
+  hypotheses run on. Only a pathological result (`D̄` ≈ generic prior AND
+  `ICC_account` ≈ 0) still means stop.
+- **`ingest/clients.py` is real now.** `ArcticShiftClient` uses the Arctic Shift
+  HTTP API (`arctic-shift.photon-reddit.com/api`, no key), time-paginating
+  `/comments/search` + `/posts/search` per author. Handles 429 backoff and
+  skips 4xx "dense window" pages forward by a day. `ArcticShiftDumpClient`
+  (DuckDB over `hf://datasets/open-index/arctic`) for sample-frame scans.
+  `PrawClient` for `--gap-fill`.
+- `ingest/pipeline.py` + `scripts/ingest_accounts.py`: username → hash (UserMap)
+  → fetch → exclusion filter → inclusion check → chunk → `data/accounts/{hash}/`
+  + `data/accounts/index.parquet` (hashes only). `--from-subreddit` seeds a
+  candidate pool from a sub's commenters.
+- `chunking.py`: added `target_chunks` (default 60) — prolific accounts produced
+  ~2900 thread-chunks, unusable for per-chunk LLM rating / graphical VAR; now
+  coarsens to ~60 time-ordered windows.
+- **Tested on real Reddit accounts** (`spez`, `Poem_for_your_sprog`,
+  `shitty_watercolour`): fetch + normalize + hash + exclusion + chunk all work.
+  e.g. Poem_for_your_sprog → 4228c/10p, 25 subs, 5159d span, 0% excluded,
+  338 chunks, eligible. Test artifacts (`data/`, `secrets/`, `cache/`) deleted.
+- Tests: +`test_ingest_pipeline.py` (fake client). 18 pass, ruff clean.
+- Shared a visualization of the 1.1 synthetic-recovery results as an Artifact.
+
+
+
 ### 2026-08-31 / 09-01 — scaffold + Milestone 1.1 pipeline (first pass)
 Built the entire estimator + centrality + synthetic-validation pipeline against
 a deterministic mock/oracle rater. `pytest -q` → 16 passed. `ruff check` clean.
@@ -44,7 +77,10 @@ Decisions locked:
 | `rater/` base+cache+mock | **done** + tests |
 | `rater/anthropic_backend.py` | **written, never run against the real API** |
 | `ingest/` hashing+exclusion+chunking | **done** + tests |
-| `ingest/clients.py` (arctic_shift, praw) | **stub** (`NotImplementedError`) — 1.2 |
+| `ingest/clients.py` (ArcticShift API + dump, PRAW) | **done**, tested on real accounts |
+| `ingest/pipeline.py` + `scripts/ingest_accounts.py` | **done** + tests |
+| `estimate/nomothetic.py` (D̄ pooled fixed effect, Bᵢ) | **not started** — next |
+| `validate/variance.py` (ICC partition, D̄ centrality) | **not started** — next |
 | `centrality.py` | **done** (SLA≈eigenvector asserted) |
 | `estimate/` evidence,e1,e2,e3 | **done** + tests; **E3 undirected weak — see gaps** |
 | `validate/synthetic,recovery,report` | **done** |
@@ -93,19 +129,24 @@ design wants. E3 *undirected* still recovers ~0 (see gap 1).
 5. `anthropic_backend` unexercised — first real call may surface schema/format
    issues in the prompts (JSON adherence, brief-rewrite length).
 
-## Immediate next steps (for whoever resumes — Gemini or otherwise)
+## Immediate next steps (for whoever resumes)
 
-1. Read `reports/milestone1.md` §1.1. Fill the "Read / decisions" TODOs.
-2. Scale the grid: raise `validate.synthetic.*` in `config/default.yaml`
-   (12 DAGs, 3 noise levels, 10 reps) and re-run for final 1.1 numbers.
-3. Fix gap (1): swap `ebicglasso` for a real implementation; re-run; confirm E3
-   undirected + E1↔E3 convergence recover in synthetic.
-4. Tiny real-API sanity run: `model.backend: anthropic`, 2 DAGs, thick only,
-   compare recovery curve shape to the mock. Needs `ANTHROPIC_API_KEY`.
-5. Milestone 1.2: implement `ingest/clients.py` (Arctic Shift DuckDB sample
-   frame + fetch, PRAW gap-fill), wire `scripts/build_network.py` to write
-   `data/networks/`, pull ~50 accounts, write `validate/variance.py`
-   (crossed random effects → `ICC_account`) → **run the ICC gate**.
+1. **Decide the real-account sample.** Give the resumer a username list, or a
+   `--from-subreddit` seed + criteria. Set a real `RTN_HASH_SALT` (not the
+   `dev-test-salt` used in throwaway testing).
+2. `python -m scripts.ingest_accounts --users-file accounts.txt` for ~50–80
+   candidates → keep the `eligible` ones from `data/accounts/index.parquet`.
+3. Build `estimate/nomothetic.py`: N2 pooled crossed random-effects fit over all
+   accounts' E1 long tables → `D̄` (fixed effects) + `Bᵢ` (per-account); N3
+   pooled E3. Then `validate/variance.py`: `ICC_account` + bootstrap CI,
+   `D̄` centrality, `corr(D̄, D_generic)`, N1/N2/N3 convergence. Run 1.2.
+4. `reports/milestone1.md` §1.2 — report the partition; note which branch
+   (nomothetic / idiographic) the data selects.
+5. In parallel (cheap, offline): fix the `ebicglasso` gap; scale the synthetic
+   grid (`config/default.yaml`) for final 1.1 numbers; tiny real-API run to
+   check the mock's realism (needs `ANTHROPIC_API_KEY`).
+6. Decide the E2 pair-count question before the first real network build
+   (§ Known gaps 3) — it sets the API bill.
 
 ## Open questions for the user
 

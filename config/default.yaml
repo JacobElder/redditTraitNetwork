@@ -23,6 +23,8 @@ cache:
   enabled: true
 
 ingest:
+  arctic_shift_base: https://arctic-shift.photon-reddit.com/api
+  # praw: {client_id: ..., client_secret: ..., user_agent: ...}  # only for --gap-fill
   min_comments: 300
   min_years_span: 2
   min_subreddits: 5
@@ -32,6 +34,9 @@ ingest:
   chunk:
     strategy: thread              # thread | window
     window_size: 15               # items per chunk when strategy == window
+    target_chunks: 60             # coarsen to ~this many time-ordered windows
+                                  # (prolific accounts yield 1000s of thread-chunks,
+                                  #  unusable for per-chunk rating / graphical VAR)
     max_chars: 6000               # hard cap per chunk fed to the rater
     min_chars: 200                # drop chunks below this
 
