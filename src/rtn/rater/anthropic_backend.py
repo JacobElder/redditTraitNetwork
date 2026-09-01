@@ -7,11 +7,11 @@ JSON is requested in the prompt; the base class handles one reformat retry.
 
 from __future__ import annotations
 
-import os
 import time
 from typing import Any
 
 from .base import Rater
+from .keys import resolve_key
 
 _SYSTEM = (
     "You are a careful research assistant assisting with a personality-"
@@ -40,7 +40,7 @@ class AnthropicRater(Rater):
         except ImportError as e:  # pragma: no cover
             raise ImportError("pip install anthropic") from e
         self._client = anthropic.Anthropic(
-            api_key=api_key or os.environ.get("ANTHROPIC_API_KEY")
+            api_key=resolve_key(api_key, "ANTHROPIC_API_KEY")
         )
         self._model = model
         self._max_tokens = max_tokens

@@ -15,11 +15,11 @@ and ``model.base_url`` / ``model.api_key_env`` / ``model.name`` in the config.
 
 from __future__ import annotations
 
-import os
 import time
 from typing import Any
 
 from .base import Rater
+from .keys import resolve_key
 
 _SYSTEM = (
     "You are a careful research assistant assisting with a personality-"
@@ -52,7 +52,7 @@ class OpenAICompatibleRater(Rater):
         self._requests = requests
         self._url = base_url.rstrip("/") + "/chat/completions"
         self._model = model
-        self._key = api_key or os.environ.get(api_key_env) or "not-needed"
+        self._key = resolve_key(api_key, api_key_env) or "not-needed"
         self._temperature = temperature
         self._max_tokens = max_tokens
         self._pause = request_pause_s

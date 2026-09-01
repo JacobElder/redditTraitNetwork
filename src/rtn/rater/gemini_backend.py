@@ -14,11 +14,11 @@ key from ``GEMINI_API_KEY`` (or ``model.api_key``). Raw ``requests``, no SDK.
 from __future__ import annotations
 
 import json
-import os
 import time
 from typing import Any
 
 from .base import Rater
+from .keys import key_file_for, resolve_key
 
 _SYSTEM = (
     "You are a careful research assistant assisting with a personality-"
@@ -48,9 +48,12 @@ class GeminiRater(Rater):
             raise ImportError("pip install requests") from e
         self._requests = requests
         self._model = model
-        self._key = api_key or os.environ.get(api_key_env)
+        self._key = resolve_key(api_key, api_key_env)
         if not self._key:
-            raise RuntimeError(f"set ${api_key_env} (free key at aistudio.google.com/apikey)")
+            raise RuntimeError(
+                f"no Gemini key: set ${api_key_env}, or write it to "
+                f"{key_file_for(api_key_env)} (free key at aistudio.google.com/apikey)"
+            )
         self._base = "https://generativelanguage.googleapis.com/v1beta/models"
         self._temperature = temperature
         self._max_tokens = max_tokens
