@@ -52,6 +52,7 @@ def main() -> None:
         args.account, chunk_texts, vocab, prompts, rater,
         quotes_per_trait=int(cfg.get("estimate.e1.evidence_quotes_per_trait", 8)),
         strategy=cfg.get("estimate.e1.brief_strategy", "per_chunk"),
+        max_chunks=cfg.get("estimate.e1.brief_max_chunks"),
         config_hash=ch8,
     )
     e1 = estimate_e1(

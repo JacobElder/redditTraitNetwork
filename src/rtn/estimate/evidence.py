@@ -91,18 +91,27 @@ def build_brief(
     *,
     quotes_per_trait: int = 8,
     strategy: str = "per_chunk",
+    max_chunks: int | None = None,
     config_hash: str | None = None,
 ) -> EvidenceBrief:
     """``per_chunk`` (default): extract trait evidence from each chunk separately,
     then merge and keep the top ``quotes_per_trait`` per trait. Robust to model
     context limits and far more thorough than one giant prompt. ``single``: the
     original one-shot extraction over the whole corpus.
+
+    ``max_chunks`` (per_chunk only): use an evenly-spaced sample of that many
+    chunks for the brief, to cap model calls. E3 still uses the full chunk set.
     """
     base = {
         "account_hash": account_hash,
         "prompt_version": prompts.version,
         "config_hash": config_hash,
     }
+    if strategy != "single" and max_chunks and len(chunk_texts) > max_chunks:
+        import numpy as np
+
+        idx = np.linspace(0, len(chunk_texts) - 1, max_chunks, dtype=int)
+        chunk_texts = [chunk_texts[i] for i in sorted(set(idx.tolist()))]
     if strategy == "single":
         prompt = prompts.evidence_brief_rendered(chunk_texts, vocab, quotes_per_trait)
         resp = rater.complete(

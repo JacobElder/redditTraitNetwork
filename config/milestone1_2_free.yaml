@@ -24,3 +24,10 @@ estimate:
   replicates: 1
   e2:
     fit_generic_prior: false   # defer to the scale-up pass
+
+# COST LEVERS (do NOT add mid-run — they change the config hash and orphan
+# already-built accounts). For a fresh cheaper run, add under estimate:
+#   e1: {brief_max_chunks: 15}   # brief from 15 sampled chunks not 45  (-30/acct)
+#   e3: {enabled: false}          # skip E3 entirely                     (-45/acct)
+# Free Gemini 3.5-flash-lite = 500 requests/day. Current cost ~170/account
+# (~3 accounts/day). With both levers ~95/account (~5/day).

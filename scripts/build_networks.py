@@ -56,6 +56,7 @@ def build_one(account: str, cfg, vocab, prompts, rater) -> dict:
         account, chunk_texts, vocab, prompts, rater,
         quotes_per_trait=int(cfg.get("estimate.e1.evidence_quotes_per_trait", 8)),
         strategy=cfg.get("estimate.e1.brief_strategy", "per_chunk"),
+        max_chunks=cfg.get("estimate.e1.brief_max_chunks"),
         config_hash=ch8,
     )
     e1 = estimate_e1(
@@ -70,6 +71,9 @@ def build_one(account: str, cfg, vocab, prompts, rater) -> dict:
             brief, vocab, prompts, rater, n_replicates=cfg.replicates,
             account_hash=account, config_hash=ch8,
         ).save(out_dir / Network.artifact_name("e2", ch8, pv))
+
+    if not cfg.get("estimate.e3.enabled", True):
+        return {"n_chunks": len(chunk_ids), "e3_directed": False}
 
     e3 = estimate_e3(
         account, chunk_ids, chunk_texts, vocab, prompts, rater,
@@ -114,7 +118,7 @@ def main() -> None:
             print("  building generic prior d_generic ...")
             estimate_generic(vocab, prompts, rater, n_replicates=cfg.replicates, config_hash=ch8).save(gpath)
 
-    done = skipped = failed = 0
+    done = skipped = failed = consec_fail = 0
     for i, account in enumerate(hashes, 1):
         if not args.rebuild and _already_built(account, ch8, pv):
             skipped += 1
@@ -123,14 +127,20 @@ def main() -> None:
         try:
             info = build_one(account, cfg, vocab, prompts, rater)
             done += 1
+            consec_fail = 0
             msg = f"[{i}/{len(hashes)}] {account} ok · {info['n_chunks']} chunks · {time.time()-t0:.0f}s"
         except Exception as e:
             failed += 1
+            consec_fail += 1
             msg = f"[{i}/{len(hashes)}] {account} FAILED · {e}"
             logf.write(traceback.format_exc() + "\n")
         print("  " + msg)
         logf.write(f"{time.strftime('%Y-%m-%d %H:%M')} {msg}\n")
         logf.flush()
+        if consec_fail >= 2:
+            print("  2 consecutive failures (likely a daily quota cap) — stopping. "
+                  "Rerun later; built accounts and cached calls are skipped/reused.")
+            break
 
     print(f"\ndone {done} · skipped {skipped} · failed {failed}")
     logf.close()
