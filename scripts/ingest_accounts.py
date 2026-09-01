@@ -47,8 +47,12 @@ def _collect_usernames(args) -> list[str]:
         client = ArcticShiftClient()
         since = _parse_date(args.since) if args.since else _parse_date("2020-01-01")
         until = _parse_date(args.until) if args.until else int(dt.datetime.now(dt.UTC).timestamp())
-        pool = client.active_authors(args.from_subreddit, after=since, before=until, cap=args.sample * 8)
-        users += pool[: args.sample]
+        subs = [s.strip() for s in args.from_subreddit.split(",") if s.strip()]
+        per_sub = max(1, -(-args.sample // len(subs)))  # spread the quota across subs
+        for sub in subs:
+            pool = client.active_authors(sub, after=since, before=until, cap=per_sub * 8)
+            users += pool[:per_sub]
+            print(f"  seed r/{sub}: {min(len(pool), per_sub)} candidates")
     # dedupe, preserve order
     seen: set[str] = set()
     return [u for u in users if not (u in seen or seen.add(u))]
@@ -60,7 +64,11 @@ def main() -> None:
     ap.add_argument("--override", action="append", default=[])
     ap.add_argument("--users", help="comma-separated usernames")
     ap.add_argument("--users-file", help="file with one username per line")
-    ap.add_argument("--from-subreddit", help="seed candidates from this subreddit's commenters")
+    ap.add_argument(
+        "--from-subreddit",
+        help="seed candidates from these subreddits' commenters (comma-separated; "
+        "--sample is split evenly across them)",
+    )
     ap.add_argument("--since", help="YYYY-MM-DD (with --from-subreddit)")
     ap.add_argument("--until", help="YYYY-MM-DD (with --from-subreddit)")
     ap.add_argument("--sample", type=int, default=50, help="candidates to take from --from-subreddit")
