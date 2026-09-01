@@ -53,6 +53,56 @@ def _assemble(items: pd.DataFrame, max_chars: int) -> list[tuple[list[str], str,
     return out
 
 
+def _sampled_windows(
+    items: pd.DataFrame, target: int, max_chars: int, min_chars: int, account_hash: str
+) -> list[Chunk]:
+    n = len(items)
+    bounds = np.linspace(0, n, target + 1, dtype=int)
+    n_epochs = max(2, min(6, target // 8 or 2))
+    chunks: list[Chunk] = []
+    for k in range(target):
+        lo, hi = bounds[k], bounds[k + 1]
+        if hi <= lo:
+            continue
+        win = items.iloc[lo:hi]
+        pieces_all = [
+            f"({r.subreddit}) {str(r.body).strip()}"
+            for r in win.itertuples(index=False)
+        ]
+        avg_len = max(1, sum(len(p) for p in pieces_all) // len(pieces_all) + 2)
+        keep_n = min(len(win), max(1, max_chars // avg_len))
+        sel = np.linspace(0, len(win) - 1, keep_n, dtype=int)
+        sel = sorted({int(s) for s in sel})
+        truncated = keep_n < len(win)
+        parts, ids, used = [], [], 0
+        for pos in sel:
+            piece = pieces_all[pos]
+            if used and used + len(piece) > max_chars:
+                truncated = True
+                break
+            parts.append(piece)
+            ids.append(win.iloc[pos]["item_id"])
+            used += len(piece) + 2
+        text = "\n\n".join(parts)
+        if len(text) < min_chars:
+            continue
+        chunks.append(
+            Chunk(
+                chunk_id=f"{account_hash}:{len(chunks):05d}",
+                account_hash=account_hash,
+                strategy="sampled_window",
+                item_ids=ids,
+                t_start=int(win["created_utc"].iloc[0]),
+                t_end=int(win["created_utc"].iloc[-1]),
+                n_chars=len(text),
+                text=text,
+                epoch=int(k * n_epochs // target),
+                meta={"window_items": int(hi - lo), "sampled": len(ids), "truncated": truncated},
+            )
+        )
+    return chunks
+
+
 def chunk_items(items: pd.DataFrame, cfg: dict, account_hash: str) -> list[Chunk]:
     strategy = cfg.get("strategy", "thread")
     max_chars = int(cfg.get("max_chars", 6000))
@@ -64,12 +114,16 @@ def chunk_items(items: pd.DataFrame, cfg: dict, account_hash: str) -> list[Chunk
     if items.empty:
         return []
 
-    # A prolific account can yield thousands of thread-chunks, which is unusable
-    # for per-chunk LLM rating and for graphical VAR. When target_chunks is set,
-    # coarsen to ~that many time-ordered windows (still capped by max_chars).
-    if target_chunks:
-        strategy = "window"
-        window_size = max(window_size, -(-len(items) // int(target_chunks)))
+    # A prolific account can yield thousands of thread-chunks, unusable for
+    # per-chunk LLM rating and graphical VAR. When target_chunks is set, cut the
+    # history into exactly that many contiguous time windows and take an
+    # evenly-spaced <= max_chars SAMPLE of each window (rather than splitting a
+    # dense window into more chunks). Each chunk is then a snapshot of one
+    # period — the right unit for E3's time series.
+    if target_chunks and len(items) > int(target_chunks):
+        return _sampled_windows(
+            items, int(target_chunks), max_chars, min_chars, account_hash
+        )
 
     t_lo, t_hi = int(items["created_utc"].min()), int(items["created_utc"].max())
     n_epochs = max(2, min(6, len(items) // 40))
