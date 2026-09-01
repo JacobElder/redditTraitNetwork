@@ -1,0 +1,32 @@
+# Override for the Milestone 1.2 methodological run (nomothetic / idiographic
+# variance partition on ~50 real accounts).
+#
+#   RTN_HASH_SALT=... python -m scripts.ingest_accounts \
+#       --config config/default.yaml --override config/milestone1_2.yaml \
+#       --from-subreddit changemyview --since 2024-01-01 --sample 60
+#
+#   python -m scripts.build_network --account <hash> \
+#       --config config/default.yaml --override config/milestone1_2.yaml
+#
+# Choices for this run (see docs/PLAN.md §7.2):
+# - E2 per-account pairwise is OFF (the ~1560-pair-per-account cost driver).
+#   The generic prior d_generic still runs once for the study; E1 and E3 carry
+#   the per-account signal. Turn per_account back on for the confirmatory sample
+#   if 1.2 shows E2 adds information.
+# - 3 replicates instead of 5 — temperature is 0, so replicate spread is only API
+#   non-determinism; 3 is enough to estimate weight_sd and ~40% cheaper.
+
+model:
+  backend: anthropic
+  name: claude-sonnet-5
+
+estimate:
+  replicates: 3
+  e2:
+    enabled: true
+    per_account: false
+    fit_generic_prior: true
+
+validate:
+  variance:
+    n_accounts: 50

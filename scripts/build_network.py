@@ -61,11 +61,12 @@ def main() -> None:
     e1.save(out_dir / Network.artifact_name("e1", ch8, pv))
 
     if cfg.get("estimate.e2.enabled", True):
-        e2 = estimate_e2(
-            brief, vocab, prompts, rater, n_replicates=cfg.replicates,
-            account_hash=args.account, config_hash=ch8,
-        )
-        e2.save(out_dir / Network.artifact_name("e2", ch8, pv))
+        if cfg.get("estimate.e2.per_account", True):
+            e2 = estimate_e2(
+                brief, vocab, prompts, rater, n_replicates=cfg.replicates,
+                account_hash=args.account, config_hash=ch8,
+            )
+            e2.save(out_dir / Network.artifact_name("e2", ch8, pv))
         if cfg.get("estimate.e2.fit_generic_prior", True):
             g = estimate_generic(
                 vocab, prompts, rater, n_replicates=cfg.replicates, config_hash=ch8

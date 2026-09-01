@@ -15,13 +15,18 @@ from pathlib import Path
 from ..config import REPO_ROOT
 
 SALT_ENV = "RTN_HASH_SALT"
+SALT_FILE = REPO_ROOT / "secrets" / "salt"  # gitignored fallback
 
 
 def _salt() -> str:
     salt = os.environ.get(SALT_ENV)
+    if not salt and SALT_FILE.exists():
+        salt = SALT_FILE.read_text().strip()
     if not salt:
         raise RuntimeError(
-            f"set {SALT_ENV} (a fixed project secret) before hashing usernames"
+            f"set ${SALT_ENV} or write the salt to {SALT_FILE} "
+            "(a fixed, high-entropy project secret) before hashing usernames. "
+            "Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\""
         )
     return salt
 

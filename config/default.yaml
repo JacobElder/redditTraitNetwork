@@ -48,7 +48,10 @@ estimate:
     evidence_quotes_per_trait: 8
   e2:
     enabled: true
-    fit_generic_prior: true       # also fit d_generic with no account conditioning
+    per_account: true             # elicit all 1560 ordered pairs per account (the
+                                  # API cost driver — set false for a run that only
+                                  # needs d_generic + E1/E3)
+    fit_generic_prior: true       # fit d_generic once for the whole study
   e3:
     enabled: true
     undirected_method: ebicglasso # ebicglasso | graphicallasso
