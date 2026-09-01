@@ -75,6 +75,7 @@ class Rater(ABC):
     def complete(
         self, prompt: str, *, call_parts: dict[str, Any], expect_json: bool = True
     ) -> RaterResponse:
+        call_parts = {**call_parts, "model": self.model_id}
         key = make_key(call_parts)
         if self.cache_enabled:
             hit = self.cache.get(key)

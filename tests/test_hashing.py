@@ -17,7 +17,10 @@ def test_usermap_appends(tmp_path):
     assert um2.get("someuser") == h
 
 
-def test_hash_requires_salt(monkeypatch):
+def test_hash_requires_salt(monkeypatch, tmp_path):
+    import rtn.ingest.hashing as h
+
     monkeypatch.delenv("RTN_HASH_SALT", raising=False)
+    monkeypatch.setattr(h, "SALT_FILE", tmp_path / "nonexistent-salt")
     with pytest.raises(RuntimeError):
         hash_username("spez")

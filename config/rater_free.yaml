@@ -1,0 +1,37 @@
+# Free / local rater backends for the estimation step. Layer on top of
+# config/milestone1_2.yaml, e.g.:
+#
+#   python -m scripts.build_networks --config config/default.yaml \
+#       --override config/milestone1_2.yaml --override config/rater_free.yaml
+#
+# Pick ONE model block below and delete the others (or keep this file as a
+# template and make your own). Every rater call is cached on
+# (account, prompt_version, task, trait, replicate, config_hash, model), so
+# switching backends is safe — a different model misses the cache and is
+# re-elicited; switching back reuses the earlier answers. Keep prompt_version
+# and the trait vocab fixed within a study.
+
+# --- Google Gemini, AI Studio free tier -----------------------------------
+# Free key: https://aistudio.google.com/apikey  (export GEMINI_API_KEY=...)
+# Free tier is rate-limited per minute / per day; request_pause_s spaces calls
+# out so a long run doesn't trip the per-minute limit.
+model:
+  backend: gemini
+  name: gemini-flash-latest
+  request_pause_s: 4.0        # ~15 requests/min; raise if you hit 429s
+
+# --- Local model via Ollama (truly free, needs a capable machine) --------
+# ollama pull llama3.1:70b   (or qwen2.5:32b / gemma2:27b for less VRAM)
+# model:
+#   backend: ollama
+#   name: llama3.1:70b
+#   request_pause_s: 0.0
+
+# --- Groq free tier (fast, generous free limits) ------------------------
+# Free key: https://console.groq.com/keys   (export GROQ_API_KEY=...)
+# model:
+#   backend: openai_compatible
+#   base_url: https://api.groq.com/openai/v1
+#   api_key_env: GROQ_API_KEY
+#   name: llama-3.3-70b-versatile
+#   request_pause_s: 2.0

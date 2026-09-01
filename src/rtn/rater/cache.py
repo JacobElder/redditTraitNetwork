@@ -44,6 +44,7 @@ def make_key(parts: dict[str, Any]) -> str:
             "trait",
             "replicate",
             "config_hash",
+            "model",
         )
     }
     blob = json.dumps(ordered, sort_keys=True, separators=(",", ":"))

@@ -20,6 +20,13 @@ model:
   backend: anthropic
   name: claude-sonnet-5
 
+ingest:
+  chunk:
+    # coarser chunks for real, prolific accounts: fewer LLM calls in E3, denser
+    # text per chunk. Still well above E3's 20-chunk floor.
+    target_chunks: 45
+    max_chars: 10000
+
 estimate:
   replicates: 3
   e2:
