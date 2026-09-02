@@ -76,8 +76,33 @@ def _ebic(emp_cov: np.ndarray, precision: np.ndarray, n: int, gamma: float) -> f
     return -2.0 * ll + e * np.log(n) + 4.0 * e * gamma * np.log(p)
 
 
-def ebicglasso(x: np.ndarray, gamma: float = 0.5, n_alphas: int = 10) -> np.ndarray:
-    """Return the partial-correlation matrix chosen by EBIC over an alpha grid."""
+def partial_correlation(x: np.ndarray, method: str = "ledoitwolf") -> np.ndarray:
+    """Partial-correlation network from the chunk x trait matrix.
+
+    ``ledoitwolf`` (default): Ledoit-Wolf shrinkage covariance, then invert. No
+    sparsity selection — stable in the p ≈ n regime this project lives in
+    (~45 chunks, 40 traits), where graphical-lasso EBIC collapses to an empty
+    graph. Not sparse, but a valid weighted network for the E1↔E3 convergence
+    check and for centrality.
+    ``ebicglasso``: the sparse alternative (see :func:`ebicglasso`).
+    """
+    if method == "ebicglasso":
+        return ebicglasso(x, gamma=0.0)
+    from sklearn.covariance import LedoitWolf
+
+    xs = _standardize(x)
+    cov = LedoitWolf().fit(xs).covariance_
+    prec = np.linalg.pinv(cov)
+    dinv = np.sqrt(np.outer(np.diag(prec), np.diag(prec)))
+    pcor = -prec / dinv
+    np.fill_diagonal(pcor, 0.0)
+    return pcor
+
+
+def ebicglasso(x: np.ndarray, gamma: float = 0.0, n_alphas: int = 10) -> np.ndarray:
+    """Return the partial-correlation matrix chosen by EBIC over an alpha grid.
+    ``gamma=0`` = plain BIC (less conservative); higher = sparser. At p ≈ n this
+    still tends to over-sparsify — prefer :func:`partial_correlation`."""
     xs = _standardize(x)
     n = xs.shape[0]
     emp_cov = np.cov(xs, rowvar=False)
@@ -147,6 +172,7 @@ def estimate_e3(
     n_replicates: int,
     min_chunks: int = 20,
     ebic_gamma: float = 0.5,
+    undirected_method: str = "ledoitwolf",
     with_contemporaneous: bool = True,
     config_hash: str | None = None,
 ) -> dict[str, object]:
@@ -171,7 +197,14 @@ def estimate_e3(
         n_replicates=n_replicates,
     )
 
-    undirected = ebicglasso(xmat, ebic_gamma) if xmat.shape[0] >= 5 else np.zeros((vocab.k, vocab.k))
+    if xmat.shape[0] >= 5:
+        undirected = (
+            partial_correlation(xmat, method=undirected_method)
+            if undirected_method != "ebicglasso_gamma"
+            else ebicglasso(xmat, ebic_gamma)
+        )
+    else:
+        undirected = np.zeros((vocab.k, vocab.k))
     nets: dict[str, object] = {
         "X": X,
         "undirected": Network(estimator="e3_undirected", d=undirected, **common),

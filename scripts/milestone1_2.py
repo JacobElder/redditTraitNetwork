@@ -69,12 +69,26 @@ def main() -> None:
         convergence["D̄ vs generic prior (E2)"] = float(
             pearsonr(_offdiag(d_bar.d), _offdiag(gen.d))[0]
         )
-    e3 = load_account_networks("e3_directed", ch8, pv)
-    if e3:
-        e3_bar, _ = nomothetic_network(e3, vocab, estimator="e3_pooled")
-        convergence["D̄ vs pooled E3 (directed)"] = float(
-            pearsonr(_offdiag(d_bar.d), _offdiag(e3_bar.d))[0]
+    # E1 is directed; E3-undirected is symmetric — compare against symmetrized E1
+    d_bar_sym = (d_bar.d + d_bar.d.T) / 2
+    for est, label in [("e3_undirected", "undirected"), ("e3_directed", "directed VAR")]:
+        e3 = load_account_networks(est, ch8, pv)
+        if not e3:
+            continue
+        e3_bar, _ = nomothetic_network(e3, vocab, estimator=f"{est}_pooled")
+        ref = _offdiag(d_bar_sym) if est == "e3_undirected" else _offdiag(d_bar.d)
+        convergence[f"D̄ vs pooled E3 ({label})"] = float(
+            pearsonr(ref, _offdiag(e3_bar.d))[0]
         )
+        # per-account convergence (not just the pooled means)
+        per = []
+        for a, net in nets.items():
+            if a not in e3:
+                continue
+            e1m = (net.d + net.d.T) / 2 if est == "e3_undirected" else net.d
+            per.append(pearsonr(_offdiag(e1m), _offdiag(e3[a].d))[0])
+        if per:
+            convergence[f"E1↔E3 ({label}), mean per-account"] = float(np.mean(per))
 
     cent = all_centralities(d_bar)
 
