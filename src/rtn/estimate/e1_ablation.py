@@ -79,6 +79,11 @@ def estimate_e1(
         d[i, :] = full_vec - abl_vec
         sd[i, :] = np.array([abl_sd[n] for n in vocab.names])
 
+    # a rare elicitation drops a trait key -> NaN cell; treat as no measured
+    # ablation effect (0). Count is tracked in meta for the report.
+    n_missing = int(np.isnan(d).sum())
+    d = np.nan_to_num(d, nan=0.0)
+    sd = np.nan_to_num(sd, nan=0.0)
     np.fill_diagonal(d, 0.0)
     return Network(
         estimator="e1",
@@ -89,5 +94,5 @@ def estimate_e1(
         prompt_version=prompts.version,
         weight_sd=sd,
         n_replicates=n_replicates,
-        meta={"ablation_strength": ablation_strength},
+        meta={"ablation_strength": ablation_strength, "n_missing_cells": n_missing},
     )

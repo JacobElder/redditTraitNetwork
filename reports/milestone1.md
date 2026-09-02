@@ -47,3 +47,50 @@ _Generated 2026-09-01 04:11 UTC. 90 pipeline runs (5 ground-truth DAGs × 3 volu
 - TODO(analyst): if E1−generic recovery collapses relative to raw E1, note that the account-specific signal is weak even in simulation.
 - KNOWN GAP: E3 undirected recovery is ~0 and E1↔E3 convergence is weak in synthetic — `ebicglasso` over-sparsifies at p=40 (see docs/PLAN.md 'Known gaps'). Fix the estimator before reading E3 numbers as evidence.
 <!-- SECTION:synthetic_recovery:end -->
+
+<!-- SECTION:variance_partition:start -->
+## 1.2 Nomothetic / idiographic variance partition
+
+_Generated 2026-09-02 12:33 UTC. 5 accounts × 1560 directed trait pairs × 1 replicates. Method-of-moments decomposition._
+
+### Where the edge-weight variance lives
+
+| component | variance | share | 95% CI |
+|---|--:|--:|---|
+| **σ²_pair — nomothetic** (shared structure) | 22.696 | 17% | (22.6958, 84.3817) |
+| σ²_account (additive person shift) | 1.113 | 1% | — |
+| **σ²_account:pair — idiographic pattern** | 106.757 | 82% | (42.1006, 115.6461) |
+| σ²_replicate (elicitation noise, excluded above) | 0.000 | — | — |
+
+> ⚠️ σ²_replicate ≈ 0 (run used 1 replicate, or a deterministic model). Elicitation noise is **not** separated from the idiographic-pattern term, so σ²_account:pair and ICC_idiographic below are **upper bounds**. Milestone 1.4 (prompt paraphrases) gives the real noise estimate; re-run 1.2 after.
+
+**ICC_idiographic = 0.826**  (CI (0.3782, 0.8262)) — share of non-noise edge variance that is person-specific (additive + pattern).
+ICC_account-only = 0.009 (CI (0.0009, 0.011)).
+
+### D̄ — the nomothetic network
+
+Top traits by SLA centrality on the pooled fixed-effect network:
+
+| trait         | measure   |    value |
+|:--------------|:----------|---------:|
+| forgiving     | sla       | 0.249197 |
+| incurious     | sla       | 0.246422 |
+| secure        | sla       | 0.236306 |
+| disciplined   | sla       | 0.233229 |
+| passive       | sla       | 0.207785 |
+| resentful     | sla       | 0.20626  |
+| outgoing      | sla       | 0.202421 |
+| unintelligent | sla       | 0.19113  |
+
+Convergence of the three nomothetic estimates:
+
+- D̄ vs pooled E3 (undirected): r = +0.556
+- E1↔E3 (undirected), mean per-account: r = +0.293
+- D̄ vs pooled E3 (directed VAR): r = +0.094
+- E1↔E3 (directed VAR), mean per-account: r = +0.009
+
+### Branch selection (docs/PLAN.md §7.2, §8)
+
+`ICC_idiographic = 0.826`, and the idiographic variance is mostly *pattern* (σ²_account:pair > σ²_account) rather than an additive shift — people have **distinctive dependency structures**. Milestone 2 runs H1–H3 on per-account `Dᵢ` centrality.
+
+<!-- SECTION:variance_partition:end -->

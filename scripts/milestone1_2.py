@@ -54,12 +54,14 @@ def main() -> None:
             f"only {len(nets)} account networks for {args.estimator}/*/{pv} — "
             "run scripts.build_networks first"
         )
-    ch8 = nets[next(iter(nets))].config_hash
-    print(f"pooling {len(nets)} accounts ({args.estimator}) · config {ch8}")
+    first = nets[next(iter(nets))]
+    ch8 = first.config_hash
+    replicates = first.n_replicates or cfg.replicates
+    print(f"pooling {len(nets)} accounts ({args.estimator}) · config {ch8} · {replicates} replicate(s)")
 
     d_bar, b = nomothetic_network(nets, vocab, estimator=f"{args.estimator}_pooled")
     long_df = stack_long(nets)
-    vc = fit_variance_partition(long_df, replicates=cfg.replicates, n_boot=args.boot)
+    vc = fit_variance_partition(long_df, replicates=replicates, n_boot=args.boot)
 
     # convergence of the three nomothetic estimates
     convergence: dict[str, float] = {}
