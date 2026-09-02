@@ -183,6 +183,29 @@ recovery. **E1↔E3 directed converge strongly in simulation** (ρ ≈ 0.75 at t
 — the two estimators without a shared failure mode agree, which is what the
 design wants. E3 *undirected* still recovers ~0 (see gap 1).
 
+## 2026-09-02 — first real §1.2 result (5 accounts)
+
+`reports/milestone1.md` §1.2 written. **Heavy caveats: n=5, 1 replicate
+(σ²_rep unmeasured → ICC is an upper bound), gemini-3.5-flash-lite.**
+
+| | value |
+|---|---|
+| σ²_pair (nomothetic) | 22.7 (17%) |
+| σ²_account:pair (idiographic pattern) | 106.8 (82%) |
+| σ²_account (additive shift) | 1.1 (1%) |
+| **ICC_idiographic** | **0.83, CI [0.38, 0.83]** |
+| D̄ vs pooled E3-undirected | r = +0.56 |
+| E1↔E3 per-account (undirected) | r = +0.29 |
+| between-account edge r | mean 0.20, range [0.09, 0.39] |
+| D̄ antonym \|d\| vs other \|d\| | 21.4 vs 3.9 |
+
+Directional read: **substantial idiographic structure** (not a nomothetic
+constant), and E1↔E3 converge. Both need confirming with more accounts + the
+M1.4 noise estimate. Preview artifact updated.
+
+Build hit today's 500/day cap at 5 accounts (acct 6 failed). Resume tomorrow
+for 6-8.
+
 ## 2026-09-02 — E3-undirected fixed; build resumed
 
 - **E3-undirected gap resolved.** EBICglasso collapsed to ~0 at p≈n (45 chunks,
