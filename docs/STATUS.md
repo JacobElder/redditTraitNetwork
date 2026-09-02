@@ -183,6 +183,19 @@ recovery. **E1↔E3 directed converge strongly in simulation** (ρ ≈ 0.75 at t
 — the two estimators without a shared failure mode agree, which is what the
 design wants. E3 *undirected* still recovers ~0 (see gap 1).
 
+## 2026-09-02 — E3-undirected fixed; build resumed
+
+- **E3-undirected gap resolved.** EBICglasso collapsed to ~0 at p≈n (45 chunks,
+  40 traits). Switched to **Ledoit-Wolf shrinkage partial correlations**
+  (`partial_correlation()`, default). On the 2 real accounts:
+  `r(E1_sym, E3-undirected) ≈ +0.25 to +0.31` — real E1↔E3 edge-level
+  convergence (centrality ρ still ≈0; edge convergence is the cleaner test).
+- `scripts/recompute_e3.py --method ledoitwolf` rebuilds E3 networks from cached
+  chunk ratings without re-eliciting; also saves `e3_X` for re-analysis. Run it
+  after every `build_networks` (the live config still says `ebicglasso` to keep
+  the config hash stable for the built accounts — recompute overrides it).
+- Build resumed on day-2 quota: 3/8 accounts done (acct 3 was mostly cached).
+
 ## Known gaps / debt
 
 1. **`estimate/e3_covariation.ebicglasso` over-sparsifies at p=40** — EBIC picks a
