@@ -183,6 +183,24 @@ recovery. **E1↔E3 directed converge strongly in simulation** (ρ ≈ 0.75 at t
 — the two estimators without a shared failure mode agree, which is what the
 design wants. E3 *undirected* still recovers ~0 (see gap 1).
 
+## 2026-09-06 — §1.2 at 8 accounts (CI tightening)
+
+| | 5 accts (09-02) | 8 accts (09-06) |
+|---|---|---|
+| σ²_pair (nomothetic) | 22.7 | 29.6 |
+| σ²_account:pair (idiographic) | 106.8 | 98.5 |
+| ICC_idiographic raw / noise-adj | 0.83 / 0.79 | **0.77 / 0.73** |
+| bootstrap CI | [0.38, 0.83] | **[0.54, 0.76]** |
+| D̄ vs pooled E3-undirected | +0.56 | **+0.64** |
+| E1↔E3 per-account | +0.29 | +0.32 |
+
+Direction holds: substantial idiographic structure, E1↔E3 converging *more* with
+more data, CI lower bound up 0.38→0.54. Still n=8, 1 replicate, flash-lite,
+no M1.4.
+- Added `prompts/p1b.py` (M1.4 paraphrase), off-target noise proxy, gemini/openai
+  connection-drop retry + retryDelay-aware backoff.
+- Preview artifact updated. Free-tier build creeps ~2-3 accounts/day.
+
 ## 2026-09-02 — first real §1.2 result (5 accounts)
 
 `reports/milestone1.md` §1.2 written. **Heavy caveats: n=5, 1 replicate
