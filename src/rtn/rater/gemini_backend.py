@@ -78,12 +78,17 @@ class GeminiRater(Rater):
             "generationConfig": gen_cfg,
         }
         for attempt in range(8):
-            resp = self._requests.post(
-                url,
-                params={"key": self._key},
-                json=payload,
-                timeout=180,
-            )
+            try:
+                resp = self._requests.post(
+                    url,
+                    params={"key": self._key},
+                    json=payload,
+                    timeout=180,
+                )
+            except self._requests.exceptions.RequestException:
+                # dropped connection / read timeout — retry with backoff
+                time.sleep(min(2**attempt, 40))
+                continue
             if resp.status_code == 429 or resp.status_code >= 500:
                 # honour the server's retryDelay (usually 7-20s) rather than a
                 # blind exponential backoff that wastes minutes

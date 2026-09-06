@@ -75,13 +75,17 @@ class OpenAICompatibleRater(Rater):
         if self._force_json and getattr(self, "_active_expect_json", True):
             payload["response_format"] = {"type": "json_object"}
 
-        for attempt in range(6):
-            resp = self._requests.post(
-                self._url,
-                headers={"Authorization": f"Bearer {self._key}", "Content-Type": "application/json"},
-                json=payload,
-                timeout=180,
-            )
+        for attempt in range(7):
+            try:
+                resp = self._requests.post(
+                    self._url,
+                    headers={"Authorization": f"Bearer {self._key}", "Content-Type": "application/json"},
+                    json=payload,
+                    timeout=180,
+                )
+            except self._requests.exceptions.RequestException:
+                time.sleep(min(2**attempt, 40))
+                continue
             if resp.status_code == 429 or resp.status_code >= 500:
                 retry_after = float(resp.headers.get("retry-after", 2**attempt))
                 time.sleep(min(retry_after, 60))

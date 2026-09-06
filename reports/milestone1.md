@@ -51,47 +51,47 @@ _Generated 2026-09-01 04:11 UTC. 90 pipeline runs (5 ground-truth DAGs × 3 volu
 <!-- SECTION:variance_partition:start -->
 ## 1.2 Nomothetic / idiographic variance partition
 
-_Generated 2026-09-06 17:23 UTC. 5 accounts × 1560 directed trait pairs × 1 replicates. Method-of-moments decomposition._
+_Generated 2026-09-06 18:25 UTC. 8 accounts × 1560 directed trait pairs × 1 replicates. Method-of-moments decomposition._
 
 ### Where the edge-weight variance lives
 
 | component | variance | share | 95% CI |
 |---|--:|--:|---|
-| **σ²_pair — nomothetic** (shared structure) | 22.696 | 17% | (22.6958, 84.3817) |
-| σ²_account (additive person shift) | 1.113 | 1% | — |
-| **σ²_account:pair — idiographic pattern** | 106.757 | 82% | (42.1006, 115.6461) |
+| **σ²_pair — nomothetic** (shared structure) | 29.571 | 23% | (29.7148, 64.0204) |
+| σ²_account (additive person shift) | 1.979 | 2% | — |
+| **σ²_account:pair — idiographic pattern** | 98.531 | 76% | (60.0216, 109.6007) |
 | σ²_replicate (measured, from stored replicate SDs) | 0.000 | — | — |
-| σ²_replicate — off-target proxy (median null-cell d²) | 25.000 | — | — |
+| σ²_replicate — off-target proxy (median null-cell d²) | 19.141 | — | — |
 
 > ⚠️ σ²_replicate is 0 as measured (1 replicate / deterministic model). The **off-target proxy** — the median squared weight over the mostly-null trait pairs — is a data-driven noise floor. `ICC_idiographic` (proxy removed) below is a **lower bound**; the raw `ICC_idiographic` is an **upper bound**. Milestone 1.4 (prompt paraphrases) gives the real number.
 
-**ICC_idiographic = 0.826** (upper bound; CI (0.3782, 0.8262))  &nbsp;·&nbsp;  **noise-adjusted = 0.785** (lower bound) — share of edge variance that is person-specific.
-ICC_account-only = 0.009 (CI (0.0009, 0.011)).
+**ICC_idiographic = 0.773** (upper bound; CI (0.5378, 0.7631))  &nbsp;·&nbsp;  **noise-adjusted = 0.734** (lower bound) — share of edge variance that is person-specific.
+ICC_account-only = 0.015 (CI (0.0041, 0.0218)).
 
 ### D̄ — the nomothetic network
 
 Top traits by SLA centrality on the pooled fixed-effect network:
 
-| trait         | measure   |    value |
-|:--------------|:----------|---------:|
-| forgiving     | sla       | 0.249197 |
-| incurious     | sla       | 0.246422 |
-| secure        | sla       | 0.236306 |
-| disciplined   | sla       | 0.233229 |
-| passive       | sla       | 0.207785 |
-| resentful     | sla       | 0.20626  |
-| outgoing      | sla       | 0.202421 |
-| unintelligent | sla       | 0.19113  |
+| trait       | measure   |    value |
+|:------------|:----------|---------:|
+| forgiving   | sla       | 0.28878  |
+| openminded  | sla       | 0.254918 |
+| passive     | sla       | 0.241482 |
+| resentful   | sla       | 0.228912 |
+| kind        | sla       | 0.211359 |
+| considerate | sla       | 0.190984 |
+| disciplined | sla       | 0.1849   |
+| hardworking | sla       | 0.184229 |
 
 Convergence of the three nomothetic estimates:
 
-- D̄ vs pooled E3 (undirected): r = +0.556
-- E1↔E3 (undirected), mean per-account: r = +0.293
-- D̄ vs pooled E3 (directed VAR): r = +0.094
-- E1↔E3 (directed VAR), mean per-account: r = +0.009
+- D̄ vs pooled E3 (undirected): r = +0.640
+- E1↔E3 (undirected), mean per-account: r = +0.316
+- D̄ vs pooled E3 (directed VAR): r = +0.100
+- E1↔E3 (directed VAR), mean per-account: r = +0.015
 
 ### Branch selection (docs/PLAN.md §7.2, §8)
 
-`ICC_idiographic` [0.79, 0.83] — even the noise-adjusted lower bound is substantial, and the idiographic variance is mostly *pattern* (σ²_account:pair > σ²_account), not an additive shift: people have **distinctive dependency structures**. Provisional branch — Milestone 2 runs H1–H3 on per-account `Dᵢ` centrality.
+`ICC_idiographic` [0.73, 0.77] — even the noise-adjusted lower bound is substantial, and the idiographic variance is mostly *pattern* (σ²_account:pair > σ²_account), not an additive shift: people have **distinctive dependency structures**. Provisional branch — Milestone 2 runs H1–H3 on per-account `Dᵢ` centrality.
 
 <!-- SECTION:variance_partition:end -->
