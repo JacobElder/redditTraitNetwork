@@ -14,6 +14,7 @@ key from ``GEMINI_API_KEY`` (or ``model.api_key``). Raw ``requests``, no SDK.
 from __future__ import annotations
 
 import json
+import re
 import time
 from typing import Any
 
@@ -76,7 +77,7 @@ class GeminiRater(Rater):
             "contents": [{"role": "user", "parts": [{"text": prompt}]}],
             "generationConfig": gen_cfg,
         }
-        for attempt in range(6):
+        for attempt in range(8):
             resp = self._requests.post(
                 url,
                 params={"key": self._key},
@@ -84,7 +85,15 @@ class GeminiRater(Rater):
                 timeout=180,
             )
             if resp.status_code == 429 or resp.status_code >= 500:
-                time.sleep(min(2**attempt * 5, 90))
+                # honour the server's retryDelay (usually 7-20s) rather than a
+                # blind exponential backoff that wastes minutes
+                wait = 2**attempt
+                m = re.search(r'"retryDelay":\s*"(\d+(?:\.\d+)?)s"', resp.text)
+                if m:
+                    wait = float(m.group(1)) + 1.0
+                elif resp.headers.get("Retry-After"):
+                    wait = float(resp.headers["Retry-After"]) + 1.0
+                time.sleep(min(wait, 65))
                 continue
             resp.raise_for_status()
             body = resp.json()
