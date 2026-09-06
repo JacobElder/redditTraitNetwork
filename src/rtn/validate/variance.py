@@ -48,15 +48,21 @@ class VarianceComponents:
     n_accounts: int
     n_pairs: int
     replicates: int
+    # data-driven noise proxy: robust magnitude of the (mostly-null) off-diagonal
+    # cells, used when replicate variance is ~0 (1 replicate / deterministic model)
+    sigma2_rep_offtarget: float = 0.0
+    icc_idiographic_adj: float = float("nan")  # ICC with the proxy subtracted
     ci: dict = field(default_factory=dict)
 
     def as_row(self) -> dict:
         return {
             "sigma2_rep": self.sigma2_rep,
+            "sigma2_rep_offtarget_proxy": self.sigma2_rep_offtarget,
             "sigma2_account": self.sigma2_account,
             "sigma2_pair_nomothetic": self.sigma2_pair,
             "sigma2_account_pair_idiographic": self.sigma2_account_pair,
             "icc_idiographic": self.icc_idiographic,
+            "icc_idiographic_noise_adjusted": self.icc_idiographic_adj,
             "icc_account_only": self.icc_account_only,
             "n_accounts": self.n_accounts,
             "n_pairs": self.n_pairs,
@@ -112,11 +118,30 @@ def _decompose(m: np.ndarray, cell_var: np.ndarray, replicates: int) -> dict:
     )
 
 
+def _offtarget_noise(m: np.ndarray) -> float:
+    """Robust σ²_rep proxy from the mostly-null cells.
+
+    Most directed trait pairs have no real dependency, so the bulk of the
+    per-account edge weights is elicitation noise. The median squared weight
+    (across accounts × pairs) estimates E[noise²] as long as < ~50% of pairs
+    carry real signal. A lower-bound tool for when replicate variance is 0.
+    """
+    vals = m[np.isfinite(m)]
+    if vals.size == 0:
+        return 0.0
+    return float(np.median(vals**2))
+
+
 def fit_variance_partition(
     long_df: pd.DataFrame, replicates: int = 3, n_boot: int = 500, seed: int = 0
 ) -> VarianceComponents:
     m, cell_var, accts, pairs = _pivot(long_df)
     base = _decompose(m, cell_var, replicates)
+    s2_offtarget = _offtarget_noise(m - np.nanmean(m, axis=0, keepdims=True))
+    # ICC with the proxy removed from the interaction term
+    ap_adj = max(base["sigma2_account_pair"] - s2_offtarget, 0.0)
+    den_adj = base["sigma2_account"] + base["sigma2_pair"] + ap_adj
+    icc_adj = (base["sigma2_account"] + ap_adj) / den_adj if den_adj > 0 else float("nan")
 
     rng = np.random.default_rng(seed)
     boot = {k: [] for k in ("icc_idiographic", "icc_account_only", "sigma2_pair", "sigma2_account_pair")}
@@ -140,5 +165,7 @@ def fit_variance_partition(
         n_accounts=len(accts),
         n_pairs=len(pairs),
         replicates=replicates,
+        sigma2_rep_offtarget=round(s2_offtarget, 4),
+        icc_idiographic_adj=round(icc_adj, 4),
         ci=ci,
     )

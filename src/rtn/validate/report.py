@@ -70,21 +70,24 @@ def write_variance_partition(
         f"{pct(vc.sigma2_account)} | — |",
         f"| **σ²_account:pair — idiographic pattern** | {vc.sigma2_account_pair:.3f} | "
         f"{pct(vc.sigma2_account_pair)} | {ci.get('sigma2_account_pair', '—')} |",
-        f"| σ²_replicate (elicitation noise, excluded above) | {vc.sigma2_rep:.3f} | — | — |",
+        f"| σ²_replicate (measured, from stored replicate SDs) | {vc.sigma2_rep:.3f} | — | — |",
+        f"| σ²_replicate — off-target proxy (median null-cell d²) | {vc.sigma2_rep_offtarget:.3f} | — | — |",
         "",
         (
-            "> ⚠️ σ²_replicate ≈ 0 (run used 1 replicate, or a deterministic "
-            "model). Elicitation noise is **not** separated from the idiographic-"
-            "pattern term, so σ²_account:pair and ICC_idiographic below are "
-            "**upper bounds**. Milestone 1.4 (prompt paraphrases) gives the real "
-            "noise estimate; re-run 1.2 after."
+            "> ⚠️ σ²_replicate is 0 as measured (1 replicate / deterministic "
+            "model). The **off-target proxy** — the median squared weight over "
+            "the mostly-null trait pairs — is a data-driven noise floor. "
+            "`ICC_idiographic` (proxy removed) below is a **lower bound**; the "
+            "raw `ICC_idiographic` is an **upper bound**. Milestone 1.4 (prompt "
+            "paraphrases) gives the real number."
             if vc.sigma2_rep < 1e-6
             else ""
         ),
         "",
-        f"**ICC_idiographic = {vc.icc_idiographic:.3f}**  (CI {ci.get('icc_idiographic', '—')}) "
-        f"— share of non-noise edge variance that is person-specific "
-        f"(additive + pattern).",
+        f"**ICC_idiographic = {vc.icc_idiographic:.3f}** (upper bound; CI "
+        f"{ci.get('icc_idiographic', '—')})  &nbsp;·&nbsp;  "
+        f"**noise-adjusted = {vc.icc_idiographic_adj:.3f}** (lower bound) "
+        "— share of edge variance that is person-specific.",
         f"ICC_account-only = {vc.icc_account_only:.3f} (CI {ci.get('icc_account_only', '—')}).",
         "",
         "### D̄ — the nomothetic network",
@@ -111,26 +114,37 @@ def write_variance_partition(
 
 
 def _branch_note(vc) -> str:
+    lo = vc.icc_idiographic_adj if vc.icc_idiographic_adj == vc.icc_idiographic_adj else vc.icc_idiographic
+    rng = f"[{lo:.2f}, {vc.icc_idiographic:.2f}]"
     if vc.icc_idiographic < 0.10:
         return (
-            f"`ICC_idiographic = {vc.icc_idiographic:.3f}` is low — the network is "
-            "mostly **nomothetic**. Milestone 2 runs H1–H3 on `D̄` centrality, "
-            "with each person's self-description weighting of `Bᵢ` as the "
-            "individual-difference term. Not a failure — this matches the "
-            "Sloman/Love/Ahn and Elder framing."
+            f"`ICC_idiographic` {rng} is low — the network is mostly "
+            "**nomothetic**. Milestone 2 runs H1–H3 on `D̄` centrality, with each "
+            "person's self-description weighting of `Bᵢ` as the individual-"
+            "difference term. Not a failure — this matches the Sloman/Love/Ahn "
+            "and Elder framing."
+        )
+    if lo < 0.10:
+        return (
+            f"`ICC_idiographic` {rng} straddles the noise floor — the raw value "
+            "is high but the noise-adjusted lower bound is near zero. **Cannot "
+            "yet tell** whether the idiographic structure is real. Needs more "
+            "accounts and the Milestone 1.4 noise estimate before choosing a "
+            "branch."
         )
     if vc.sigma2_account_pair > vc.sigma2_account:
         return (
-            f"`ICC_idiographic = {vc.icc_idiographic:.3f}`, and the idiographic "
-            "variance is mostly *pattern* (σ²_account:pair > σ²_account) rather "
-            "than an additive shift — people have **distinctive dependency "
-            "structures**. Milestone 2 runs H1–H3 on per-account `Dᵢ` centrality."
+            f"`ICC_idiographic` {rng} — even the noise-adjusted lower bound is "
+            "substantial, and the idiographic variance is mostly *pattern* "
+            "(σ²_account:pair > σ²_account), not an additive shift: people have "
+            "**distinctive dependency structures**. Provisional branch — "
+            "Milestone 2 runs H1–H3 on per-account `Dᵢ` centrality."
         )
     return (
-        f"`ICC_idiographic = {vc.icc_idiographic:.3f}`, but it is mostly an "
-        "additive person effect (σ²_account ≳ σ²_account:pair) — people differ in "
-        "overall dependency magnitude, not in which edges they weight. Treat the "
-        "structure as nomothetic; report the additive effect as a nuisance."
+        f"`ICC_idiographic` {rng}, but mostly an additive person effect "
+        "(σ²_account ≳ σ²_account:pair) — people differ in overall dependency "
+        "magnitude, not which edges they weight. Treat the structure as "
+        "nomothetic; report the additive effect as a nuisance."
     )
 
 

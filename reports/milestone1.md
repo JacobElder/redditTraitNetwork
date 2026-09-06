@@ -51,7 +51,7 @@ _Generated 2026-09-01 04:11 UTC. 90 pipeline runs (5 ground-truth DAGs × 3 volu
 <!-- SECTION:variance_partition:start -->
 ## 1.2 Nomothetic / idiographic variance partition
 
-_Generated 2026-09-02 12:33 UTC. 5 accounts × 1560 directed trait pairs × 1 replicates. Method-of-moments decomposition._
+_Generated 2026-09-06 17:23 UTC. 5 accounts × 1560 directed trait pairs × 1 replicates. Method-of-moments decomposition._
 
 ### Where the edge-weight variance lives
 
@@ -60,11 +60,12 @@ _Generated 2026-09-02 12:33 UTC. 5 accounts × 1560 directed trait pairs × 1 re
 | **σ²_pair — nomothetic** (shared structure) | 22.696 | 17% | (22.6958, 84.3817) |
 | σ²_account (additive person shift) | 1.113 | 1% | — |
 | **σ²_account:pair — idiographic pattern** | 106.757 | 82% | (42.1006, 115.6461) |
-| σ²_replicate (elicitation noise, excluded above) | 0.000 | — | — |
+| σ²_replicate (measured, from stored replicate SDs) | 0.000 | — | — |
+| σ²_replicate — off-target proxy (median null-cell d²) | 25.000 | — | — |
 
-> ⚠️ σ²_replicate ≈ 0 (run used 1 replicate, or a deterministic model). Elicitation noise is **not** separated from the idiographic-pattern term, so σ²_account:pair and ICC_idiographic below are **upper bounds**. Milestone 1.4 (prompt paraphrases) gives the real noise estimate; re-run 1.2 after.
+> ⚠️ σ²_replicate is 0 as measured (1 replicate / deterministic model). The **off-target proxy** — the median squared weight over the mostly-null trait pairs — is a data-driven noise floor. `ICC_idiographic` (proxy removed) below is a **lower bound**; the raw `ICC_idiographic` is an **upper bound**. Milestone 1.4 (prompt paraphrases) gives the real number.
 
-**ICC_idiographic = 0.826**  (CI (0.3782, 0.8262)) — share of non-noise edge variance that is person-specific (additive + pattern).
+**ICC_idiographic = 0.826** (upper bound; CI (0.3782, 0.8262))  &nbsp;·&nbsp;  **noise-adjusted = 0.785** (lower bound) — share of edge variance that is person-specific.
 ICC_account-only = 0.009 (CI (0.0009, 0.011)).
 
 ### D̄ — the nomothetic network
@@ -91,6 +92,6 @@ Convergence of the three nomothetic estimates:
 
 ### Branch selection (docs/PLAN.md §7.2, §8)
 
-`ICC_idiographic = 0.826`, and the idiographic variance is mostly *pattern* (σ²_account:pair > σ²_account) rather than an additive shift — people have **distinctive dependency structures**. Milestone 2 runs H1–H3 on per-account `Dᵢ` centrality.
+`ICC_idiographic` [0.79, 0.83] — even the noise-adjusted lower bound is substantial, and the idiographic variance is mostly *pattern* (σ²_account:pair > σ²_account), not an additive shift: people have **distinctive dependency structures**. Provisional branch — Milestone 2 runs H1–H3 on per-account `Dᵢ` centrality.
 
 <!-- SECTION:variance_partition:end -->
