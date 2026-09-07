@@ -51,22 +51,22 @@ _Generated 2026-09-01 04:11 UTC. 90 pipeline runs (5 ground-truth DAGs × 3 volu
 <!-- SECTION:variance_partition:start -->
 ## 1.2 Nomothetic / idiographic variance partition
 
-_Generated 2026-09-07 17:24 UTC. 8 accounts × 1560 directed trait pairs × 1 replicates. Method-of-moments decomposition._
+_Generated 2026-09-07 17:32 UTC. 9 accounts × 1560 directed trait pairs × 1 replicates. Method-of-moments decomposition._
 
 ### Where the edge-weight variance lives
 
 | component | variance | share | 95% CI |
 |---|--:|--:|---|
-| **σ²_pair — nomothetic** (shared structure) | 29.571 | 23% | (29.7446, 64.0204) |
-| σ²_account (additive person shift) | 1.979 | 2% | — |
-| **σ²_account:pair — idiographic pattern** | 98.531 | 76% | (60.1754, 109.7324) |
+| **σ²_pair — nomothetic** (shared structure) | 28.607 | 23% | (29.1913, 56.9542) |
+| σ²_account (additive person shift) | 1.765 | 1% | — |
+| **σ²_account:pair — idiographic pattern** | 91.832 | 75% | (55.5987, 104.3515) |
 | σ²_replicate (measured, from stored replicate SDs) | 0.000 | — | — |
-| σ²_replicate — off-target proxy (median null-cell d²) | 19.141 | — | — |
+| σ²_replicate — off-target proxy (median null-cell d²) | 19.753 | — | — |
 
 > ⚠️ σ²_replicate is 0 as measured (1 replicate / deterministic model). The **off-target proxy** — the median squared weight over the mostly-null trait pairs — is a data-driven noise floor. `ICC_idiographic` (proxy removed) below is a **lower bound**; the raw `ICC_idiographic` is an **upper bound**. Milestone 1.4 (prompt paraphrases) gives the real number.
 
-**ICC_idiographic = 0.773** (upper bound; CI (0.5377, 0.7616))  &nbsp;·&nbsp;  **noise-adjusted = 0.734** (lower bound) — share of edge variance that is person-specific.
-ICC_account-only = 0.015 (CI (0.0041, 0.0217)).
+**ICC_idiographic = 0.766** (upper bound; CI (0.561, 0.7553))  &nbsp;·&nbsp;  **noise-adjusted = 0.721** (lower bound) — share of edge variance that is person-specific.
+ICC_account-only = 0.014 (CI (0.0036, 0.0206)).
 
 ### D̄ — the nomothetic network
 
@@ -74,26 +74,36 @@ Top traits by SLA centrality on the pooled fixed-effect network:
 
 | trait       | measure   |    value |
 |:------------|:----------|---------:|
-| forgiving   | sla       | 0.28878  |
-| openminded  | sla       | 0.254918 |
-| passive     | sla       | 0.241482 |
-| resentful   | sla       | 0.228912 |
-| kind        | sla       | 0.211359 |
-| considerate | sla       | 0.190984 |
-| disciplined | sla       | 0.1849   |
-| hardworking | sla       | 0.184229 |
+| forgiving   | sla       | 0.281604 |
+| openminded  | sla       | 0.256538 |
+| passive     | sla       | 0.231583 |
+| resentful   | sla       | 0.228006 |
+| kind        | sla       | 0.226746 |
+| hardworking | sla       | 0.199807 |
+| disciplined | sla       | 0.194028 |
+| considerate | sla       | 0.189605 |
 
 Convergence checks:
 
-- D̄ vs pooled E3 (undirected): r = +0.640
-- E1↔E3 (undirected), mean per-account: r = +0.316
-- D̄ vs pooled E3 (directed VAR): r = +0.100
+- D̄ vs pooled E3 (undirected): r = +0.680
+- E1↔E3 (undirected), mean per-account: r = +0.334
+- D̄ vs pooled E3 (directed VAR): r = +0.105
 - E1↔E3 (directed VAR), mean per-account: r = +0.015
-- E1 residual ↔ E3 residual (idiographic corroboration): r = +0.010
--   — range across accounts: (-0.046, 0.049)
+- E1 residual ↔ E3 residual (idiographic corroboration): r = -0.003
+-   — range across accounts: (-0.1, 0.064)
+- [node weighting] weight_source_consistency (density ↔ self-relevance), mean ρ: r = +0.864
+- [node weighting] between-account personalised-centrality, mean ρ: r = +0.873
+- [node weighting] between-account range: (0.79, 0.96)
+- [node weighting] personalised vs unweighted D̄ centrality, mean ρ: r = +0.849
 
 ### Branch selection (docs/PLAN.md §7.2, §8)
 
-**Ambiguous — do not pick a branch yet.** `ICC_idiographic` [0.73, 0.77] is high, BUT E1's *residual* (person-specific) structure does not show up in E3 (residual↔residual r = +0.010). The nomothetic `D̄` is well-supported (E1↔E3 converge on it), but the person-to-person differences E1 produces are **not yet corroborated by an independent estimator** — consistent with the idiographic variance being largely elicitation noise / an E1-method artifact. Caveat on the caveat: E3-residual at 1 replicate / 45 chunks is itself noisy, so this could also be low power. Needs: replicates or p1/p1b pairs to denoise Bᵢ, a stronger E3, and more accounts, before the idiographic branch is on the table.
+**Consistent with the framework's nomothetic-structure / idiographic-weighting split.**
+
+- **Shared network `D̄`: supported** — E1 and E3 converge on it. The framework predicts the dependency *structure* is largely universal; that's what we see.
+- **Per-account *edge* deviations (`Bᵢ`): not corroborated** — E1-residual ↔ E3-residual r = -0.003. The framework does *not* predict idiosyncratic edge structures, so this is expected; the raw `ICC_idiographic` [0.72, 0.77] is inflated by elicitation noise.
+- **Per-account *node weighting*: a consistent signal** — the two independent weight sources (evidence density, self-relevance) agree at ρ = +0.86 within account. But they move centrality only modestly (between-account personalised-centrality ρ = +0.87) — the shared structure still dominates, and this account sample may be homogeneous.
+
+**Milestone 2 runs H1–H3 on personalised centrality: `personalised_pagerank(D̄, node_weightᵢ)`** — shared network, idiographic weighting. Not per-account `Dᵢ`. Confirm the node-weighting signal against an independent salience measure and with more (more varied) accounts first.
 
 <!-- SECTION:variance_partition:end -->

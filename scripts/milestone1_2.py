@@ -17,11 +17,12 @@ import json
 
 import numpy as np
 import pandas as pd
-from scipy.stats import pearsonr
+from scipy.stats import pearsonr, spearmanr
 
-from rtn.centrality import all_centralities
+from rtn.centrality import all_centralities, personalized_pagerank, sla_centrality
 from rtn.config import REPO_ROOT, load_config
 from rtn.estimate import load_account_networks, nomothetic_network, stack_long
+from rtn.estimate.node_weights import node_weights
 from rtn.network import Network
 from rtn.traits import load_traits
 from rtn.validate.report import write_variance_partition
@@ -116,6 +117,32 @@ def main() -> None:
 
     cent = all_centralities(d_bar)
 
+    # -- theory-aligned idiographic operationalisation (docs/PLAN.md §2b) --
+    # shared network D̄, node weighting per account (Sloman/Love/Ahn, Elder).
+    # Centrality = personalised_pagerank(D̄, teleport = the account's node weights).
+    import itertools
+
+    base_c = sla_centrality(d_bar.d)
+    pw_density, pw_selfrel, consist = {}, {}, []
+    for a in nets:
+        wd = node_weights(cfg.cache_path, a, vocab, "density")
+        ws = node_weights(cfg.cache_path, a, vocab, "self_relevance")
+        pw_density[a] = personalized_pagerank(d_bar.d, wd)
+        pw_selfrel[a] = personalized_pagerank(d_bar.d, ws)
+        consist.append(spearmanr(pw_density[a], pw_selfrel[a])[0])
+    between = [
+        spearmanr(pw_density[a], pw_density[b])[0]
+        for a, b in itertools.combinations(nets, 2)
+    ]
+    move = [spearmanr(pw_density[a], base_c)[0] for a in nets]
+    node_weighting = {
+        "weight_source_consistency (density ↔ self-relevance), mean ρ": round(float(np.mean(consist)), 3),
+        "between-account personalised-centrality, mean ρ": round(float(np.mean(between)), 3),
+        "between-account range": (round(float(min(between)), 2), round(float(max(between)), 2)),
+        "personalised vs unweighted D̄ centrality, mean ρ": round(float(np.mean(move)), 3),
+    }
+    convergence.update({f"[node weighting] {k}": v for k, v in node_weighting.items()})
+
     out_dir = REPO_ROOT / "data" / "networks" / "_pooled"
     d_bar.save(out_dir / Network.artifact_name(f"{args.estimator}_pooled", ch8, pv))
     dev_frames = []
@@ -132,7 +159,7 @@ def main() -> None:
 
     print(json.dumps(vc.as_row(), indent=2, default=str))
     for k, v in convergence.items():
-        print(f"  {k}: r={v:+.3f}")
+        print(f"  {k}: {v if isinstance(v, tuple) else f'{v:+.3f}'}")
     print(f"wrote {report_path}")
 
 
