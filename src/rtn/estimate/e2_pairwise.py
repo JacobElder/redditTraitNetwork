@@ -1,6 +1,6 @@
 """E2 — direct pairwise elicitation. BASELINE / generic-prior estimator.
 
-Asks the original dependency item verbatim, in persona, for every ordered trait
+Asks a pairwise dependency-magnitude question, in persona, for every ordered trait
 pair. Also fits ``d_generic`` with no account conditioning at all; the reported
 E1/E2 account-specific signal is ``d - d_generic``.
 

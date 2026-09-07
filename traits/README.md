@@ -18,9 +18,14 @@ feedback-asymmetry hypotheses (H2) require negative-trait coverage.
 
 ## Source
 
-The *Mapping the Self* OSF materials were **not** retrieved for this build (per
-the session's working decision). The list is instead a curated, valence-balanced
-draw constructed to satisfy:
+**Chosen: IPIP, not the *Mapping the Self* 296-trait set.** The IPIP Big Five
+adjective markers give a cleaner, better-understood, antonym-pairable vocabulary
+with direct Big Five structure (useful for the PANDORA convergent-validity
+check). The *Mapping the Self* trait set is not used here by preference, not just
+for lack of retrieval. Size (40) is also a deliberate cost choice — E1 is
+`O(k²)` model calls per account; see `docs/METHOD.md §2`.
+
+The list is a curated, valence-balanced draw constructed to satisfy:
 
 - **20 antonym pairs**, one positive and one negative pole each.
 - **Big Five coverage on both poles of every domain** (O, C, E, A, N) — 4 pairs
@@ -32,8 +37,8 @@ draw constructed to satisfy:
   category.
 
 Lexical anchors are the **IPIP** Big Five adjective markers
-(Goldberg, 1992; https://ipip.ori.org/) and the **Anderson (1968)** trait-word
-norms:
+(Goldberg, 1992; https://ipip.ori.org/), with **Anderson (1968)** desirability
+values attached:
 
 > Anderson, N. H. (1968). Likableness ratings of 555 personality-trait words.
 > *Journal of Personality and Social Psychology, 9*(3), 272–279.

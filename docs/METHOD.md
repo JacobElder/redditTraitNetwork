@@ -10,21 +10,31 @@ me and I'll fix the doc.
 
 ## 0. The translation problem
 
-**Original paradigm.** A participant lists self-relevant traits, then rates every
-ordered pair directly: *"If you were no longer X, how much would that change how
-Y you are?"* (0–100). Those ratings **are** the directed dependency network. Its
-centrality (via the Sloman–Love–Ahn iteration) predicts resistance to belief
-updating and vmPFC response.
+**Original paradigm** (Elder, Cheung, Davis & Hughes, *JPSP* 2023 — network
+construction). A large trait list is reduced by normative rating consistency to
+~296 words. Separate participants then, for each **target trait**, free-nominate
+*"which traits does [TARGET] depend upon?"* from the remaining list. The
+**directed adjacency matrix** is built by **consensus threshold**: `A[i][j] = 1`
+iff ≥ 25 % of participants nominated *j* as dependent on *i*. This network is
+**nomothetic by construction** — the paper is explicit that it "requires a
+certain degree of consensus [and] does not necessarily reflect people's
+individual beliefs about dependencies." Outdegree centrality (how many traits
+depend on a given trait) is the headline measure. Individual differences enter
+only *later*, when people rate *themselves* on the traits and centrality-weighted
+self-structure predicts belief updating and vmPFC response.
 
-**Here.** There is no participant to ask. We have only the person's public Reddit
-writing. So every quantity the participant used to provide — which traits are
-self-relevant, how strongly they hold each one, how the traits depend on each
-other — has to be **estimated from the text**. That estimation is the whole
-project; the network math afterward is the same as the original.
+**Here.** There is no participant to nominate dependencies. We have only the
+person's public Reddit writing. So the dependency structure has to be
+**estimated from the text**, per person, and then combined across people into a
+nomothetic network — the analog of the consensus matrix.
 
-The estimation is done three ways (E1, E2, E3) that are designed to fail
-differently, so agreement between them is evidence the estimate is real rather
-than an artifact of one method.
+The per-person estimate is a **naturalistic adaptation**: instead of asking
+"which traits does X depend on," we perturb the *textual evidence* for X and
+measure how the other trait judgments move (E1, §4). Two other estimators (E2,
+E3) are designed to fail differently, so agreement between them is evidence the
+estimate is real rather than an artifact of one method. The per-person matrices
+`Dᵢ` are averaged into `D̄` (§7), which plays the role of the original's
+consensus network; centrality math on `D̄` is the same as the original's.
 
 ---
 
@@ -57,17 +67,26 @@ Output: `data/accounts/{hash}/{items,chunks}.parquet` and one line in
 ## 2. The trait vocabulary
 
 `traits/traits.yaml` — **40 traits, 20 antonym pairs, valence-balanced**
-(20 positive, 20 negative), with Big Five coverage on both poles of every
-domain. It is **fixed**, not discovered per person, for two reasons:
+(20 positive, 20 negative), from **IPIP Big Five adjective markers**
+(Goldberg, 1992) with Anderson (1968) desirability values, chosen for Big Five
+coverage on both poles of every domain. This is the intended vocabulary, not a
+placeholder.
 
-- centrality vectors are only comparable across accounts if the nodes are the
-  same;
-- discovering nodes per person would confound "trait absent from the person"
-  with "trait never mentioned in the corpus".
+Deliberately **smaller than the original's ~296** and **fixed** (not discovered
+per person):
 
-This is the main deliberate departure from the original (which used each
-participant's own self-relevant traits). The idiographic part re-enters as
-**node weighting** (§7), not node selection.
+- **Cost.** E1 (§4) is `O(k²)` model calls per account. 40 traits ≈ 1,700
+  calls/account; 296 would be ≈ 55× that — infeasible at the current
+  throughput. 40 is the Milestone-1 scaffold; the confirmatory study can widen
+  it on a paid model. Widening also needs the E1 ablation "reverse toward the
+  opposite" step re-thought, since it currently uses the antonym pairing.
+- **Comparability.** Centrality vectors only compare across accounts if the
+  nodes are the same.
+- **Discovery would confound** "trait absent from the person" with "trait never
+  mentioned in the corpus."
+
+The original's node set is also fixed and nomothetic; the idiographic part there
+and here is **node weighting** (§7), not node selection.
 
 ---
 
@@ -99,7 +118,13 @@ each trait.
 
 `src/rtn/estimate/e1_ablation.py`, `prompts/p1.py → e1_elicit`, `e1_ablate`
 
-This is the direct computational analog of the original self-report item.
+A **naturalistic adaptation** of the dependency question. The original asks a
+participant "which traits does X depend upon?" We can't — there's no
+participant, only text. So we operationalise "j depends on i" as: **if the
+evidence that this person is *i* were removed, would an assessor still judge them
+*j*?** If removing *i*'s evidence pulls *j*'s rating down, *j* depends on *i*.
+The signed magnitude is the edge weight (a continuous relaxation of the
+original's binary, consensus-thresholded edge).
 
 1. **Baseline.** The LLM reads the full brief *as an assessor* and rates the
    person on all 40 traits, 0–100. Call this `r_j(full)`.
@@ -139,7 +164,7 @@ relate, producing ~the same matrix for everyone. That is exactly what E3 is for.
 
 `src/rtn/estimate/e2_pairwise.py` — **currently OFF for the free-tier run.**
 
-Asks the original dependency item *verbatim*, in persona, for every ordered
+Asks a pairwise dependency-magnitude question, in persona, for every ordered
 pair. Also fits `d_generic`: the same elicitation with **no persona and no
 corpus** — the model's pure folk theory of trait dependence, one matrix for the
 whole study. The point of E2 is to measure how much of E1's signal survives
@@ -228,11 +253,16 @@ is a reliably measured signal at this sample size / model / replicate count.
 
 | measure | what it is |
 |---|---|
-| **SLA iteration** | the original's measure: `c ← normalize(δ·(\|d\|·c) + (1−δ)·c)`, δ = 0.85. Converges to the dominant eigenvector of `\|d\|`. A trait is central when other traits depend strongly on it (sign-agnostic; the lazy term just keeps it well-defined on near-acyclic matrices). |
+| **out-strength** | row sum of `\|d\|` — the continuous analog of **Elder et al.'s outdegree centrality** (their headline measure: how many traits depend on this one). `out_strength_signed` keeps the sign. |
+| **in-strength** | column sum — analog of their indegree. |
+| **SLA iteration** | the Sloman–Love–Ahn (1998) conceptual-centrality operationalisation (Elder's theoretical basis): `c ← normalize(δ·(\|d\|·c) + (1−δ)·c)`, δ = 0.85; converges to the dominant eigenvector of `\|d\|`. Recursive: a trait is central if the traits that depend on it are themselves central. |
 | **eigenvector** | dominant eigenvector of `\|d\|` directly. Sanity check — should rank-correlate ≈ 1 with SLA. |
 | **PageRank** | on `\|d\|`, column-stochastic, damping 0.85. |
-| **personalised PageRank** | same, with the teleport vector = the account's node weights (§7). |
-| **out-/in-strength, betweenness** | comparison measures. |
+| **personalised PageRank** | same, teleport vector = the account's node weights (§7). This is the idiographic-centrality DV. |
+| **betweenness** | comparison measure. |
+
+Elder et al. also report a **pairwise-similarity** measure (shared neighbours,
+degree-weighted); not yet implemented here.
 
 ---
 

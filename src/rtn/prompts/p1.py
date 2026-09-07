@@ -2,7 +2,7 @@
 
 Design notes (keep in sync with docs/PLAN.md §2):
 - E1 ablation must edit the PERSON'S OWN evidence, never an abstract label.
-- E2 asks the original dependency item verbatim.
+- E2 asks a pairwise "how much would j change" magnitude question.
 - E3 rates a single chunk; the model never states a dependency in E3.
 """
 

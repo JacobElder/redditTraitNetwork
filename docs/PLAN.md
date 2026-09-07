@@ -15,9 +15,12 @@ trait *i*, in the sense of Sloman, Love & Ahn (1998): a feature is central to a
 concept to the extent that other features depend on it. Then compute conceptual
 centrality over that network and study its behavioural correlates in the Reddit
 history. This reimagines the lab paradigm of Elder, Cheung, Davis & Hughes
-(*JPSP* 2023), in which participants rated pairwise trait dependencies directly;
-here there is no participant, so the dependency structure is estimated from text.
-**That estimation problem is the project. Everything else is plumbing.**
+(*JPSP* 2023), where a **consensus** directed dependency network was built from
+separate participants free-nominating "which traits does [TARGET] depend upon?"
+(edge kept if ≥ 25 % endorsed) — a nomothetic network. Here there is no
+participant to nominate; the per-person dependency structure is estimated from
+text (§2, E1) and averaged into the nomothetic `D̄` (§2b). See `docs/METHOD.md`
+for the full mapping. **That estimation problem is the project.**
 
 ### Edge orientation convention (used everywhere)
 
@@ -89,7 +92,7 @@ person who…", stop — that is a request for the model's generic prior.
 
 ### E2 — Direct pairwise elicitation. BASELINE / PRIOR.
 
-- Ask the original dependency item **verbatim**, in persona, for ordered trait
+- Ask a pairwise dependency-magnitude question, in persona, for ordered trait
   pairs `(i, j)`: "If you were no longer `i`, how much would that change how `j`
   you are? (0–100)". `replicates` calls per pair; `d_E2[i][j]` = mean.
 - **Also fit `d_generic`**: identical elicitation with **no account
