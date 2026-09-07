@@ -183,6 +183,22 @@ recovery. **E1↔E3 directed converge strongly in simulation** (ρ ≈ 0.75 at t
 — the two estimators without a shared failure mode agree, which is what the
 design wants. E3 *undirected* still recovers ~0 (see gap 1).
 
+## 2026-09-07 (cont.) — varied second batch ingested
+
+**89 eligible accounts** now: 48 from batch 1 (changemyview/AITA/self/
+CasualConversation/AskReddit) + **41 from batch 2** (AskHistorians, personalfinance,
+Fitness, travel, Cooking, books, DIY, dataisbeautiful) — to test whether the
+weak node-weighting signal is real-but-sample-suppressed. Batch 2 median ~6k
+comments. `index.parquet` has no batch column; identify batch 2 by
+`ingested_utc` (last ~4h of 2026-09-07).
+
+Networks built: 10 (all batch 1). Next build run: `--limit` high enough, or
+`--only` a balanced batch-1 + batch-2 list, so 1.2 gets a varied sample.
+
+Also this session: corrected the original-paradigm description across the docs
+(it's a consensus free-nomination network, not per-participant pairwise ratings);
+`docs/METHOD.md` written (full methodology).
+
 ## 2026-09-07 — the decisive idiographic check (and it's not passing yet)
 
 Added `milestone1_2`: **E1-residual ↔ E3-residual** correlation — does E1's
