@@ -96,13 +96,17 @@ def write_variance_partition(
         "",
         top.to_markdown(index=False),
         "",
-        "Convergence of the three nomothetic estimates:",
+        "Convergence checks:",
         "",
-        "\n".join(f"- {k}: r = {v:+.3f}" for k, v in convergence.items()),
+        "\n".join(
+            f"- {k}: {v}" if isinstance(v, tuple)
+            else f"- {k}: r = {v:+.3f}"
+            for k, v in convergence.items()
+        ),
         "",
         "### Branch selection (docs/PLAN.md §7.2, §8)",
         "",
-        _branch_note(vc),
+        _branch_note(vc, convergence.get("E1 residual ↔ E3 residual (idiographic corroboration)")),
         "",
     ]
     body = "\n".join(lines)
@@ -113,9 +117,25 @@ def write_variance_partition(
     return report_path
 
 
-def _branch_note(vc) -> str:
+def _branch_note(vc, resid_corr: float | None = None) -> str:
     lo = vc.icc_idiographic_adj if vc.icc_idiographic_adj == vc.icc_idiographic_adj else vc.icc_idiographic
     rng = f"[{lo:.2f}, {vc.icc_idiographic:.2f}]"
+
+    # The decisive check: is E1's idiographic part corroborated by E3?
+    if resid_corr is not None and abs(resid_corr) < 0.10 and vc.icc_idiographic >= 0.30:
+        return (
+            f"**Ambiguous — do not pick a branch yet.** `ICC_idiographic` {rng} "
+            "is high, BUT E1's *residual* (person-specific) structure does not "
+            f"show up in E3 (residual↔residual r = {resid_corr:+.3f}). The "
+            "nomothetic `D̄` is well-supported (E1↔E3 converge on it), but the "
+            "person-to-person differences E1 produces are **not yet corroborated "
+            "by an independent estimator** — consistent with the idiographic "
+            "variance being largely elicitation noise / an E1-method artifact. "
+            "Caveat on the caveat: E3-residual at 1 replicate / 45 chunks is "
+            "itself noisy, so this could also be low power. Needs: replicates or "
+            "p1/p1b pairs to denoise Bᵢ, a stronger E3, and more accounts, "
+            "before the idiographic branch is on the table."
+        )
     if vc.icc_idiographic < 0.10:
         return (
             f"`ICC_idiographic` {rng} is low — the network is mostly "

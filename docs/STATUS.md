@@ -183,6 +183,28 @@ recovery. **E1↔E3 directed converge strongly in simulation** (ρ ≈ 0.75 at t
 — the two estimators without a shared failure mode agree, which is what the
 design wants. E3 *undirected* still recovers ~0 (see gap 1).
 
+## 2026-09-07 — the decisive idiographic check (and it's not passing yet)
+
+Added `milestone1_2`: **E1-residual ↔ E3-residual** correlation — does E1's
+*person-specific* structure (Dᵢ − D̄) show up in an independent estimator (E3)?
+
+**Result: r = +0.010** (range across accounts [−0.05, +0.05]). Near zero.
+
+Reading:
+- **Nomothetic `D̄` is well-supported** — E1 and E3 converge on the shared
+  structure (r = +0.64 pooled).
+- **The high `ICC_idiographic` (0.77) is E1-specific** — not corroborated by E3.
+  Consistent with the idiographic variance being largely elicitation noise or an
+  E1-method artifact rather than real person-specific conceptual structure.
+- Caveat on the caveat: E3-residual at 1 replicate / 45 chunks is itself noisy,
+  so this could partly be low power.
+
+**Branch decision: cannot pick yet.** Need replicates / p1↔p1b pairs to denoise
+Bᵢ, a stronger E3, and more accounts. The report's branch-selection note now says
+"Ambiguous — do not pick a branch yet."
+
+This is Milestone 1 doing its job.
+
 ## 2026-09-06 — §1.2 at 8 accounts (CI tightening)
 
 | | 5 accts (09-02) | 8 accts (09-06) |

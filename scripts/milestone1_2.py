@@ -92,6 +92,28 @@ def main() -> None:
         if per:
             convergence[f"E1↔E3 ({label}), mean per-account"] = float(np.mean(per))
 
+    # KEY IDIOGRAPHIC TEST: does E1's *residual* (person-specific) structure show
+    # up in E3? If Bᵢ is real, (Dᵢ_E1 − D̄_E1) correlates with (E3ᵢ − D̄_E3).
+    # If Bᵢ is elicitation noise, this is ~0. E3 shares no failure mode with E1.
+    e3u = load_account_networks("e3_undirected", ch8, pv)
+    if e3u:
+        e3u_bar, _ = nomothetic_network(e3u, vocab, estimator="e3u_pooled")
+        resid_r = []
+        for a, net in nets.items():
+            if a not in e3u:
+                continue
+            e1_resid = _offdiag((net.d + net.d.T) / 2 - d_bar_sym)
+            e3_resid = _offdiag(e3u[a].d - e3u_bar.d)
+            resid_r.append(pearsonr(e1_resid, e3_resid)[0])
+        if resid_r:
+            convergence["E1 residual ↔ E3 residual (idiographic corroboration)"] = float(
+                np.mean(resid_r)
+            )
+            convergence["  — range across accounts"] = (
+                round(float(min(resid_r)), 3),
+                round(float(max(resid_r)), 3),
+            )
+
     cent = all_centralities(d_bar)
 
     out_dir = REPO_ROOT / "data" / "networks" / "_pooled"
