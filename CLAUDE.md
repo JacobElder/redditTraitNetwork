@@ -4,10 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Read this first
 
-`docs/PLAN.md` is the authoritative, self-contained spec for the whole project —
-architecture, module contracts, data schemas, build order, and the Milestone 1
-gate. If anything here and there disagree, `docs/PLAN.md` wins. `docs/STATUS.md`
-tracks what is actually built vs. stubbed. Start every session by reading both.
+- `docs/METHOD.md` — how the pipeline works end to end and what every reported
+  quantity means (D̄, Bᵢ, ICC_idiographic, E1↔E3, node weighting, …). Read when
+  the user asks about methodology.
+- `docs/PLAN.md` — the authoritative, self-contained spec: architecture, module
+  contracts, data schemas, build order, the Milestone 1 gate. If anything here
+  and there disagree, `docs/PLAN.md` wins.
+- `docs/STATUS.md` — what is actually built vs. stubbed, and the latest results.
+
+Start every session by reading PLAN + STATUS.
 
 ## What this project is
 

@@ -10,10 +10,14 @@ This is a computational reimagining of the pairwise-dependency-rating paradigm i
 Elder, Cheung, Davis & Hughes (*JPSP*, 2023): there is no participant to ask, so
 the dependency structure is estimated from text.
 
-**This is a measurement-validation project first.** See
-[`docs/PLAN.md`](docs/PLAN.md) for the full spec and
-[`docs/STATUS.md`](docs/STATUS.md) for current progress. Agent guidance is in
-[`CLAUDE.md`](CLAUDE.md).
+**This is a measurement-validation project first.**
+
+- **[`docs/METHOD.md`](docs/METHOD.md)** — how the pipeline turns Reddit text
+  into a network, and what every symbol/number in the report means. **Start here
+  to understand the approach.**
+- [`docs/PLAN.md`](docs/PLAN.md) — full spec, build order, the Milestone 1 gate.
+- [`docs/STATUS.md`](docs/STATUS.md) — current progress and results.
+- [`CLAUDE.md`](CLAUDE.md) — agent guidance.
 
 ## Quick start
 
