@@ -145,30 +145,43 @@ estimates, in increasing order of grounding:
 `D̄` has its own centrality vector; this is directly comparable to the shared
 structure in Sloman/Love/Ahn and Elder et al. and is a result in its own right.
 
-### The idiographic deviation `Bᵢ`
+### The idiographic layer = node **weighting**, not edge structure
 
-For account `i`: `Dᵢ = D̄ + Bᵢ`. `Bᵢ` is the account-level random-effect matrix
-from N2 (or `Dᵢ_E1 − D̄`). The substantive claim the user is after: **`Bᵢ` is
-structured by how the person self-describes** — an edge `i→j` deviates from the
-nomothetic weight more when the account has more self-relevant evidence bearing
-on `i` and `j` (evidence density from the brief), or more extreme standing on
-them. Model `|Bᵢ,p|` (or `Bᵢ,p` signed) on per-account, per-trait self-description
-covariates. Personalised PageRank (teleport = evidence density) is the
-centrality-level version of the same idea.
+**Updated 2026-09-07** after the first real results. Sloman, Love & Ahn and the
+Elder work propose a **shared semantic structure** (which traits depend on which
+— `D̄`) with **idiographic node weighting** (how much each trait matters to *this*
+person's self-concept). They do **not** propose that each person has an
+idiosyncratic *edge* network. So the operationalisation is:
 
-### What the variance partition means
+- **`node_weightᵢ`** (`estimate/node_weights.py`): per-trait, per-account, from
+  the person's own data — **evidence density** (share of their extracted quotes
+  about each trait) and **self-relevance** (`|self_rating − midpoint|` from their
+  E1 baseline). Both reconstructed from the rater cache, no new calls.
+- **Idiographic centrality = `personalised_pagerank(D̄, teleport = node_weightᵢ)`**
+  — shared network, personal weighting. This is the DV for H1–H3 (§8).
+- `Bᵢ = Dᵢ_E1 − D̄` (per-account *edge* deviations) is still computed, but as a
+  **diagnostic**, not a substantive object. The first results (below) show `Bᵢ`
+  is not corroborated by E3 — expected, since the framework doesn't predict it.
 
-The crossed random-effects fit in §7.2 gives
-`ICC_account = σ²_account / (σ²_account + σ²_pair + σ²_resid)` =
-**the share of dependency-edge variance that is idiographic** rather than shared.
+### What the checks mean (revised)
 
-- Low `ICC_account` → the network is mostly nomothetic. The headline analyses run
-  on `D̄`'s centrality, with person-level self-description weighting as the
-  source of individual differences. Still a paper; still matches the theory.
-- High `ICC_account` → idiographic centrality (`Dᵢ`) is a meaningful per-person
-  DV, and H1–H3 (§8) run per account as originally framed.
+The §7.2 fit and the milestone1_2 convergence checks answer three things:
 
-Either way the number is *estimated and reported*, not used as a pass/fail gate.
+1. **Is `D̄` real?** — `corr(D̄, pooled E3)` and `corr(D̄, D_generic)`. First
+   results: E1↔E3 on `D̄` rising with n (r ≈ 0.56 → 0.68 at n = 5 → 9). **Yes.**
+2. **Are the per-account edge deviations `Bᵢ` real?** — `corr(Dᵢ_E1 − D̄,
+   E3ᵢ − Ē3)` per account. First results: ≈ 0. **No / not with this setup** —
+   the raw `ICC_idiographic` (~0.75) is inflated by elicitation noise.
+3. **Is the node weighting a real signal?** — do the two independent weight
+   sources agree within account, and does personalised centrality vary across
+   people? First results: sources agree at ρ ≈ 0.86; between-account
+   personalised-centrality ρ ≈ 0.87 (weighting moves it modestly — this account
+   sample may be homogeneous). **Consistent signal; effect size TBD with a more
+   varied sample.**
+
+`ICC_idiographic` is *reported*, not a pass/fail gate. Only a pathology — `D̄`
+itself uninformative (≈ `D_generic`, no structure beyond antonyms) **and** no
+node-weighting signal — means stop and redesign.
 
 ---
 
