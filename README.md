@@ -73,3 +73,71 @@ python -m scripts.milestone1_2 --config config/default.yaml   # -> reports/miles
 `D̄` = mean of the per-account E1 matrices. Centrality: **outdegree** (Elder et
 al.'s headline), SLA iteration (Sloman/Love/Ahn), PageRank + personalised
 PageRank (teleport = per-account node weights), strength, betweenness.
+
+## Worked example
+
+One (illustrative, not real) account. Its history is cut into ~45 time-window
+chunks; here is one:
+
+> *(r/changemyview)* I came in sure I was right, but two replies actually moved
+> me — I'll give people that.
+> *(r/hiking)* Happy to lend an axe or a bag to anyone doing the traverse, just DM.
+> *(r/personalfinance)* You're overthinking it. Automate it and stop looking.
+
+**1. Evidence brief.** A model pulls verbatim quotes bearing on each of the 40
+traits (the `evidence_brief` prompt in `prompts/p1.py`), most ending up empty:
+
+```json
+{
+  "openminded": [{"quote": "two replies actually moved me", "direction": "for"}],
+  "generous":   [{"quote": "Happy to lend an axe or a bag ... just DM", "direction": "for"}],
+  "warm":       [{"quote": "I'll give people that", "direction": "for"}],
+  "disciplined":[{"quote": "Automate it and stop looking", "direction": "for"}]
+}
+```
+
+**2. E1 — ablate one trait.** An assessor reads the whole brief and rates all 40
+traits (`e1_elicit`): say `warm 70, kind 64, forgiving 58, considerate 55`. Then
+the brief is rewritten with *warm*'s evidence removed **and reversed, in the same
+voice** (`e1_ablate`) — not "imagine a colder person":
+
+> *(r/changemyview)* Two replies "moved me"? People rarely argue in good faith —
+> not worth engaging.
+> *(r/hiking)* Not lending gear. People don't bring it back.
+
+Re-rate the ablated brief: `warm 18, kind 47, forgiving 46, considerate 41`.
+
+```
+d[warm → kind]        = 64 − 47 = +17
+d[warm → forgiving]   = 58 − 46 = +12
+d[warm → considerate] = 55 − 41 = +14
+```
+
+Repeat for all 40 traits (× 5 replicates) → this account's 40×40 matrix `Dᵢ`.
+
+**3. E2 — pairwise, in persona** (`e2_pair`; off for the free-tier run):
+
+> "You are the person described below. If you were no longer **forgiving**, how
+> much would that change how **resentful** you are? 0 = not at all, 100 =
+> completely." → `52`
+
+`e2_generic` asks the same with no persona ("If a person were no longer
+forgiving…") — the folk-theory baseline `d_generic` that E1's headline signal is
+measured against.
+
+**4. E3 — covariation.** The model only rates each chunk on all 40 traits
+(`e3_chunk`), never stating a dependency:
+
+```
+chunk 07:  openminded 68  generous 60  warm 62  disciplined 38  ...
+chunk 22:  openminded 41  generous 33  warm 44  disciplined 66  ...
+```
+
+Ledoit-Wolf partial correlations across the 45 chunk rows → an undirected
+network; lag-1 graphical VAR → a directed one. If either agrees with `Dᵢ` above a
+permutation baseline, the structure is not just an E1 rewriting artefact.
+
+**5. Combine.** `D̄` = mean of every account's `Dᵢ`. Centrality of a trait = how
+much the rest of the network depends on it. On the current 11-account `D̄` the
+highest-centrality nodes are *forgiving, passive, openminded, kind* (SLA; see
+`reports/milestone1.md` §1.2).
