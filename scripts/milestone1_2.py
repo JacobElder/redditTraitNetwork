@@ -123,22 +123,25 @@ def main() -> None:
     import itertools
 
     base_c = sla_centrality(d_bar.d)
-    pw_density, pw_selfrel, consist = {}, {}, []
+    pw_density, consist_ds, consist_de3 = {}, [], []
     for a in nets:
         wd = node_weights(cfg.cache_path, a, vocab, "density")
         ws = node_weights(cfg.cache_path, a, vocab, "self_relevance")
+        we3 = node_weights(cfg.cache_path, a, vocab, "e3_salience")
         pw_density[a] = personalized_pagerank(d_bar.d, wd)
-        pw_selfrel[a] = personalized_pagerank(d_bar.d, ws)
-        consist.append(spearmanr(pw_density[a], pw_selfrel[a])[0])
+        consist_ds.append(spearmanr(wd, ws)[0])
+        consist_de3.append(spearmanr(wd, we3)[0])  # brief vs E3 — independent estimators
     between = [
         spearmanr(pw_density[a], pw_density[b])[0]
         for a, b in itertools.combinations(nets, 2)
     ]
     move = [spearmanr(pw_density[a], base_c)[0] for a in nets]
     node_weighting = {
-        "weight_source_consistency (density ↔ self-relevance), mean ρ": round(float(np.mean(consist)), 3),
+        "weight consistency: density ↔ self-relevance, mean ρ": round(float(np.mean(consist_ds)), 3),
+        "weight CORROBORATION: brief-density ↔ E3-salience, mean ρ": round(float(np.mean(consist_de3)), 3),
+        "  — E3-salience range across accounts": (
+            round(float(min(consist_de3)), 2), round(float(max(consist_de3)), 2)),
         "between-account personalised-centrality, mean ρ": round(float(np.mean(between)), 3),
-        "between-account range": (round(float(min(between)), 2), round(float(max(between)), 2)),
         "personalised vs unweighted D̄ centrality, mean ρ": round(float(np.mean(move)), 3),
     }
     convergence.update({f"[node weighting] {k}": v for k, v in node_weighting.items()})

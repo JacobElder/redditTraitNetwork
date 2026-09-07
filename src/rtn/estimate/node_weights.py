@@ -73,6 +73,40 @@ def self_relevance(cache_path: str | Path, account: str, vocab: TraitVocab) -> n
     return _laplace(ext * 100)  # scale so laplace smoothing is gentle
 
 
+def e3_salience(cache_path: str | Path, account: str, vocab: TraitVocab) -> np.ndarray:
+    """Independent node-salience estimate from the E3 chunk ratings.
+
+    For each trait: mean over chunks of ``|score − midpoint|`` — how strongly and
+    consistently the person's writing signals that trait, either direction. The
+    E3 chunk rater never sees the evidence brief, so agreement between this and
+    the brief-derived weights corroborates the node-weighting signal across
+    estimators that don't share a failure mode.
+    """
+    con = sqlite3.connect(str(cache_path))
+    rows = con.execute(
+        "SELECT response FROM calls WHERE task='e3_chunk' AND trait LIKE ?",
+        (f"{account}:%",),
+    ).fetchall()
+    mid = (vocab.scale_min + vocab.scale_max) / 2
+    acc = np.zeros(vocab.k)
+    n = 0
+    for (resp,) in rows:
+        try:
+            d = json.loads(resp)
+        except (json.JSONDecodeError, TypeError):
+            continue
+        if not isinstance(d, dict):
+            continue
+        n += 1
+        for i, name in enumerate(vocab.names):
+            v = d.get(name)
+            if isinstance(v, (int, float)):
+                acc[i] += abs(float(v) - mid)
+    if n == 0:
+        return np.ones(vocab.k) / vocab.k
+    return _laplace(acc / n)
+
+
 def node_weights(
     cache_path: str | Path, account: str, vocab: TraitVocab, kind: str = "density"
 ) -> np.ndarray:
@@ -80,6 +114,8 @@ def node_weights(
         return evidence_density(cache_path, account, vocab)
     if kind == "self_relevance":
         return self_relevance(cache_path, account, vocab)
+    if kind == "e3_salience":
+        return e3_salience(cache_path, account, vocab)
     if kind == "combined":
         a = evidence_density(cache_path, account, vocab)
         b = self_relevance(cache_path, account, vocab)

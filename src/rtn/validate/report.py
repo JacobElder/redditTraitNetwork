@@ -109,7 +109,7 @@ def write_variance_partition(
         _branch_note(
             vc,
             convergence.get("E1 residual ↔ E3 residual (idiographic corroboration)"),
-            convergence.get("[node weighting] weight_source_consistency (density ↔ self-relevance), mean ρ"),
+            convergence.get("[node weighting] weight CORROBORATION: brief-density ↔ E3-salience, mean ρ"),
             convergence.get("[node weighting] between-account personalised-centrality, mean ρ"),
         ),
         "",
@@ -135,29 +135,38 @@ def _branch_note(
     # individuals differ in *node weighting*. So the questions are (a) is D̄
     # solid, and (b) is the per-account node weighting a real, consistent signal.
     if resid_corr is not None and abs(resid_corr) < 0.10:
-        wc = f"{weight_consistency:+.2f}" if weight_consistency is not None else "n/a"
+        wc = weight_consistency
+        wc_s = f"{wc:+.2f}" if wc is not None else "n/a"
         bp = f"{between_pers:+.2f}" if between_pers is not None else "n/a"
+        weight_ok = wc is not None and wc >= 0.20
         return (
-            "**Consistent with the framework's nomothetic-structure /"
-            " idiographic-weighting split.**\n\n"
-            f"- **Shared network `D̄`: supported** — E1 and E3 converge on it. The "
-            "framework predicts the dependency *structure* is largely universal; "
-            "that's what we see.\n"
+            "**Only the nomothetic layer is validated so far.**\n\n"
+            f"- **Shared network `D̄`: supported** — E1 and E3 converge on it "
+            "(and the convergence rises as accounts are added). The framework "
+            "predicts the dependency *structure* is largely universal; that "
+            "holds.\n"
             f"- **Per-account *edge* deviations (`Bᵢ`): not corroborated** — "
-            f"E1-residual ↔ E3-residual r = {resid_corr:+.3f}. The framework does "
-            "*not* predict idiosyncratic edge structures, so this is expected; "
-            f"the raw `ICC_idiographic` {rng} is inflated by elicitation noise.\n"
-            f"- **Per-account *node weighting*: a consistent signal** — the two "
-            f"independent weight sources (evidence density, self-relevance) agree "
-            f"at ρ = {wc} within account. But they move centrality only modestly "
-            f"(between-account personalised-centrality ρ = {bp}) — the shared "
-            "structure still dominates, and this account sample may be "
-            "homogeneous.\n\n"
-            "**Milestone 2 runs H1–H3 on personalised centrality: "
-            "`personalised_pagerank(D̄, node_weightᵢ)`** — shared network, "
-            "idiographic weighting. Not per-account `Dᵢ`. Confirm the node-"
-            "weighting signal against an independent salience measure and with "
-            "more (more varied) accounts first."
+            f"E1-residual ↔ E3-residual r = {resid_corr:+.3f}. Expected — the "
+            "framework doesn't predict idiosyncratic edges — so the raw "
+            f"`ICC_idiographic` {rng} is largely elicitation noise.\n"
+            + (
+                f"- **Per-account *node weighting*: corroborated** — brief-derived "
+                f"evidence density and independent E3 chunk-salience agree at "
+                f"ρ = {wc_s} within account. Personalised centrality varies across "
+                f"people (between-account ρ = {bp}).\n\n"
+                "**Milestone 2 DV = `personalised_pagerank(D̄, node_weightᵢ)`.**"
+                if weight_ok
+                else f"- **Per-account *node weighting*: NOT yet corroborated** — "
+                f"the weight sources disagree (brief-density ↔ E3-salience "
+                f"ρ = {wc_s}; density ↔ self-relevance also low). Either they "
+                "capture genuinely different facets, or the per-trait weight "
+                "estimates are too noisy at 1 replicate / this model / this "
+                "sample. Cannot yet say the idiographic *weighting* is a real, "
+                "measurable signal.\n\n"
+                "**Next:** more (varied) accounts; replicate or p1↔p1b the "
+                "weight-source elicitations; re-check. Until then only `D̄` and "
+                "its (unweighted) centrality are on solid ground."
+            )
         )
     if vc.icc_idiographic < 0.10:
         return (
