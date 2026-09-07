@@ -460,8 +460,47 @@ on `Dᵢ`. The hypotheses are stated the same way either way.
   `big_five` field) and check node-level convergence. **Validates the nodes, not
   the edges — state this explicitly.**
 
-`preregistration.md` for H1–H3 is written and committed **before** running them
-on the full sample. Hold out a confirmatory subsample.
+### 8b. Direct replications of the Elder findings (TODO — flag; do after Milestone 1)
+
+Two predictions from the lab papers, adapted to the naturalistic setting where
+there is no self-report — the "self-view" has to be read off trait *expression*
+in the text. **Do not build until Milestone 1 has produced a defensible `D̄` and
+a decision on the idiographic branch.**
+
+- **E-H1 — centrality × valence in self-presentation** (Elder, Cheung, Davis &
+  Hughes, *JPSP* 2023). In the lab, participants self-rate **higher** on central
+  **positive** traits and **lower** (deny more) on central **negative** traits —
+  centrality amplifies the self-positivity of the trait.
+  *Naturalistic form:* the person's mean chunk-level expression of a trait
+  (E3 salience / level) as a function of `centrality × valence` on `D̄` (or
+  `Dᵢ`), controlling for evidence density and Big Five level. Prediction:
+  positive slope of centrality on expression for positive traits, negative slope
+  for negative traits (interaction).
+  *Centrality measure:* outdegree first (their headline), then SLA / eigenvector.
+
+- **E-H2 — centrality × resistance to updating** (Elder — "learning about the
+  self" belief-updating paper, **positive traits only**). In the lab, people
+  revise self-views **less** for central positive traits after feedback.
+  *Naturalistic form:* does trait expression drift *less over time and across
+  contexts* for central traits? This is H1 sharpened — the key addition is
+  **across-subreddit** consistency, not just across-epoch: partition each
+  account's chunks by subreddit, estimate per-context trait expression, and test
+  whether central traits are more consistent across contexts (lower
+  between-context variance) than peripheral ones.
+  **Negative traits are untested in the original** — running both poles here is a
+  genuine extension, not just a replication. Prediction (to preregister): central
+  *positive* traits most stable; direction for central negative traits open.
+
+*Machinery needed for 8b that doesn't exist yet:*
+- per-subreddit chunking / trait-expression estimates (currently chunks are
+  time-ordered, not context-split);
+- a robust per-trait "expression level" and "expression stability" summary from
+  the E3 chunk × trait matrix;
+- feedback-event extraction (shared with H2/H3): downvote scores, reply
+  sentiment, timestamps.
+
+`preregistration.md` for H1–H3 **and E-H1/E-H2** is written and committed
+**before** running them on the full sample. Hold out a confirmatory subsample.
 
 ---
 

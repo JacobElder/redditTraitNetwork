@@ -293,22 +293,45 @@ for 6-8.
 
 ## Immediate next steps (for whoever resumes)
 
-1. **Decide the real-account sample.** Give the resumer a username list, or a
-   `--from-subreddit` seed + criteria. Set a real `RTN_HASH_SALT` (not the
-   `dev-test-salt` used in throwaway testing).
-2. `python -m scripts.ingest_accounts --users-file accounts.txt` for ~50–80
-   candidates → keep the `eligible` ones from `data/accounts/index.parquet`.
-3. Build `estimate/nomothetic.py`: N2 pooled crossed random-effects fit over all
-   accounts' E1 long tables → `D̄` (fixed effects) + `Bᵢ` (per-account); N3
-   pooled E3. Then `validate/variance.py`: `ICC_account` + bootstrap CI,
-   `D̄` centrality, `corr(D̄, D_generic)`, N1/N2/N3 convergence. Run 1.2.
-4. `reports/milestone1.md` §1.2 — report the partition; note which branch
-   (nomothetic / idiographic) the data selects.
-5. In parallel (cheap, offline): fix the `ebicglasso` gap; scale the synthetic
-   grid (`config/default.yaml`) for final 1.1 numbers; tiny real-API run to
-   check the mock's realism (needs `ANTHROPIC_API_KEY`).
-6. Decide the E2 pair-count question before the first real network build
-   (§ Known gaps 3) — it sets the API bill.
+State as of 2026-09-07: **11 account networks built** (all batch 1), §1.2 run —
+`D̄` validated (E1↔E3 r≈0.66, rising with n), idiographic layer not yet
+corroborated. 41 varied batch-2 accounts ingested, waiting on Gemini quota.
+
+1. **Build the varied batch.** Gemini free daily cap (500 req ≈ ~4 accts/day)
+   resets midnight PT. Run:
+   ```
+   python -m scripts.build_networks --config config/default.yaml \
+     --override config/milestone1_2.yaml --override config/milestone1_2_free.yaml \
+     --only "$(python -m scripts.select_accounts --per-cohort 15)"
+   python -m scripts.recompute_e3 --config config/default.yaml \
+     --override config/milestone1_2.yaml --override config/milestone1_2_free.yaml --method ledoitwolf
+   python -m scripts.milestone1_2 --config config/default.yaml --boot 4000
+   ```
+   Faster: add a Groq key (`secrets/groq_key`) or enable billing on the Gemini key.
+2. **1.4 denoise** — run a sample of accounts under `prompts/p1b` as well as `p1`,
+   average → real elicitation-noise estimate; re-run 1.2. Settles whether the
+   idiographic ICC is real or noise.
+3. **1.3 / 1.5** — `validate/reliability.py` (split-half, temporal split) and
+   `validate/nulls.py` (permutation null) still unwritten.
+4. **`ebicglasso` gap** — E3 undirected now uses Ledoit-Wolf (works); the
+   sparse-graphical-lasso path is still broken but no longer on the critical
+   path.
+
+## TODO — after Milestone 1 (flagged 2026-09-07, do not start early)
+
+**Direct replications / extensions of the Elder findings** — see `docs/PLAN.md`
+§8b for the full statement.
+
+- **E-H1**: central *positive* traits are expressed more, central *negative*
+  traits less (centrality × valence interaction on trait expression level).
+  Naturalistic stand-in for the JPSP self-rating result.
+- **E-H2**: central traits' expression is more stable — over time *and across
+  subreddit contexts*. Sharpens H1; the across-context test is the new piece.
+  Negative-trait poles are untested in the original → genuine extension.
+- **Machinery this needs that doesn't exist:** per-subreddit chunking + trait-
+  expression estimates; per-trait expression-level and expression-stability
+  summaries from the E3 chunk×trait matrix; feedback-event extraction.
+- Preregister with H1–H3; hold out a confirmatory subsample.
 
 ## Open questions for the user
 
